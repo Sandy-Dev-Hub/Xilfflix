@@ -42,8 +42,10 @@ export default function App() {
             <Route path="/movies" element={<Movies />} />
             <Route path="/tv-shows" element={<TVShows />} />
             <Route path="/new-popular" element={<NewPopular />} />
-            <Route path="/movie/:id" element={<MovieDetails />} />
-            <Route path="/watch/:id" element={<Watch />} />
+            <Route path="/movie/:id" element={<MovieDetails type="movie" />} />
+            <Route path="/tv/:id" element={<MovieDetails type="tv" />} />
+            <Route path="/watch/movie/:id" element={<Watch type="movie" />} />
+            <Route path="/watch/tv/:id" element={<Watch type="tv" />} />
             <Route path="/my-list" element={<MyList />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<NotFound />} />

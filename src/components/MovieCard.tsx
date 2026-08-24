@@ -34,7 +34,7 @@ export default function MovieCard({ movie, size = 'md' }: MovieCardProps) {
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/watch/${movie.id}`);
+    navigate(`/watch/${movie.type}/${movie.id}`);
   };
 
   const w = size === 'sm' ? 'w-[140px]' : 'w-[170px] sm:w-[190px] md:w-[210px]';
@@ -45,8 +45,8 @@ export default function MovieCard({ movie, size = 'md' }: MovieCardProps) {
       className={`relative ${w} flex-shrink-0 cursor-pointer`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={() => navigate(`/movie/${movie.id}`)}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/movie/${movie.id}`)}
+      onClick={() => navigate(`/${movie.type}/${movie.id}`)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/${movie.type}/${movie.id}`)}
       tabIndex={0}
       role="button"
       aria-label={`${movie.title} (${movie.year})`}

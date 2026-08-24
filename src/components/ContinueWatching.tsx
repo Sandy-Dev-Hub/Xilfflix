@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Trash2 } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { getMovieById } from '@/data/movies';
 
 export default function ContinueWatching() {
   const { continueWatching, clearProgress } = useAppStore();
@@ -22,8 +21,9 @@ export default function ContinueWatching() {
       </h2>
       <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
         {entries.map(([id, prog]) => {
-          const movie = getMovieById(id);
-          if (!movie) return null;
+          const movieMeta = prog.movieMeta;
+          // Fallback if missing metadata (from old mock data)
+          if (!movieMeta) return null;
           const pct = Math.min((prog.progress / prog.duration) * 100, 100);
 
           return (
@@ -32,13 +32,13 @@ export default function ContinueWatching() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               className="relative flex-shrink-0 w-[180px] sm:w-[200px] group cursor-pointer"
-              onClick={() => navigate(`/watch/${movie.id}`)}
+              onClick={() => navigate(`/watch/${movieMeta.type}/${id}`)}
             >
               {/* Poster */}
               <div className="relative rounded-lg overflow-hidden aspect-[2/3] bg-xf-card shadow-md">
                 <img
-                  src={movie.poster}
-                  alt={movie.title}
+                  src={movieMeta.poster}
+                  alt={movieMeta.title}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
@@ -62,7 +62,7 @@ export default function ContinueWatching() {
               {/* Info */}
               <div className="mt-2 flex items-start justify-between gap-1">
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-semibold truncate">{movie.title}</p>
+                  <p className="text-white text-xs font-semibold truncate">{movieMeta.title}</p>
                   <p className="text-xf-subtle text-xs mt-0.5">{Math.round(pct)}% watched</p>
                 </div>
                 <button
@@ -71,7 +71,7 @@ export default function ContinueWatching() {
                     clearProgress(id);
                   }}
                   className="p-1 rounded text-xf-subtle hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label={`Remove ${movie.title} from continue watching`}
+                  aria-label={`Remove ${movieMeta.title} from continue watching`}
                 >
                   <Trash2 size={13} />
                 </button>

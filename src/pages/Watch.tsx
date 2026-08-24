@@ -2,11 +2,13 @@ import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Info } from 'lucide-react';
-import { getMovieById } from '@/data/movies';
+import { getMovieDetails } from '@/services/tmdb';
+import { useTMDB } from '@/hooks/useTMDB';
 import { useAppStore } from '@/store/useAppStore';
 import VideoPlayer from '@/components/VideoPlayer';
 import ServerSelector from '@/components/ServerSelector';
 import NotFound from '@/components/NotFound';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -14,34 +16,51 @@ const pageVariants = {
   exit: { opacity: 0 },
 };
 
-export default function Watch() {
+export default function Watch({ type }: { type: 'movie' | 'tv' }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { saveProgress, getProgress } = useAppStore();
   const [serverIdx, setServerIdx] = useState(0);
 
-  const movie = id ? getMovieById(id) : undefined;
-  if (!movie) return <NotFound />;
-
-  const savedProgress = getProgress(movie.id);
-  const startAt = savedProgress?.progress ?? 0;
-
-  const onlineServers = movie.servers.filter((s) => s.status === 'online');
-  const activeServer = movie.servers[serverIdx];
+  const { data: movie, loading, error } = useTMDB(() => {
+    if (!id) return Promise.reject(new Error('No ID'));
+    return getMovieDetails(id, type);
+  }, [id, type]);
 
   const handleProgress = useCallback(
     (_played: number, playedSeconds: number, duration: number) => {
-      saveProgress(movie.id, playedSeconds, duration);
+      if (movie) {
+        saveProgress(movie.id, playedSeconds, duration, {
+          id: movie.id,
+          title: movie.title,
+          type: movie.type,
+          poster: movie.poster,
+        });
+      }
     },
-    [movie.id, saveProgress]
+    [movie, saveProgress]
   );
 
   const handleTryNextServer = () => {
+    if (!movie) return;
     const nextOnline = movie.servers.findIndex(
       (s, i) => i !== serverIdx && s.status === 'online'
     );
     if (nextOnline !== -1) setServerIdx(nextOnline);
   };
+
+  if (error) return <NotFound />;
+  if (loading || !movie) {
+    return (
+      <div className="pt-20 bg-xf-bg min-h-screen">
+        <LoadingSkeleton variant="hero" />
+      </div>
+    );
+  }
+
+  const savedProgress = getProgress(movie.id);
+  const startAt = savedProgress?.progress ?? 0;
+  const activeServer = movie.servers[serverIdx];
 
   return (
     <motion.div
@@ -55,14 +74,14 @@ export default function Watch() {
         {/* Back button */}
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => navigate(`/movie/${movie.id}`)}
+            onClick={() => navigate(`/${movie.type}/${movie.id}`)}
             className="flex items-center gap-2 text-xf-muted hover:text-white transition-colors text-sm"
           >
             <ArrowLeft size={16} />
             Back to Details
           </button>
           <button
-            onClick={() => navigate(`/movie/${movie.id}`)}
+            onClick={() => navigate(`/${movie.type}/${movie.id}`)}
             className="flex items-center gap-2 text-xf-muted hover:text-white transition-colors text-sm"
             aria-label="View movie info"
           >
@@ -77,11 +96,11 @@ export default function Watch() {
             {movie.title}
           </h1>
           <div className="flex items-center gap-3 mt-1 text-sm text-xf-muted">
-            <span>{movie.year}</span>
-            <span>·</span>
+            {movie.year > 0 && <span>{movie.year}</span>}
+            {movie.year > 0 && <span>·</span>}
             <span>{movie.type === 'tv' ? 'TV Series' : 'Movie'}</span>
-            <span>·</span>
-            <span>{movie.ageRating}</span>
+            {movie.ageRating && <span>·</span>}
+            {movie.ageRating && <span>{movie.ageRating}</span>}
           </div>
         </div>
 

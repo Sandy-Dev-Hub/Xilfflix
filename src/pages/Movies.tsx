@@ -1,11 +1,25 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Film } from 'lucide-react';
-import { getByType, getMoviesByGenre } from '@/data/movies';
+import { getPopularMovies, getDiscoverMovies } from '@/services/tmdb';
+import { useTMDB } from '@/hooks/useTMDB';
 import MovieCard from '@/components/MovieCard';
 import Footer from '@/components/Footer';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
 
-const GENRES = ['All', 'Action', 'Drama', 'Comedy', 'Thriller', 'Sci-Fi', 'Mystery', 'Horror', 'Adventure', 'Romance', 'Crime'];
+const MOVIE_GENRES = [
+  { id: 0, name: 'All' },
+  { id: 28, name: 'Action' },
+  { id: 18, name: 'Drama' },
+  { id: 35, name: 'Comedy' },
+  { id: 53, name: 'Thriller' },
+  { id: 878, name: 'Sci-Fi' },
+  { id: 9648, name: 'Mystery' },
+  { id: 27, name: 'Horror' },
+  { id: 12, name: 'Adventure' },
+  { id: 10749, name: 'Romance' },
+  { id: 80, name: 'Crime' }
+];
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -14,15 +28,13 @@ const pageVariants = {
 };
 
 export default function Movies() {
-  const [activeGenre, setActiveGenre] = useState('All');
+  const [activeGenre, setActiveGenre] = useState(0);
 
-  const allMovies = getByType('movie');
-  const filtered =
-    activeGenre === 'All'
-      ? allMovies
-      : allMovies.filter((m) =>
-          m.genres.map((g) => g.toLowerCase()).includes(activeGenre.toLowerCase())
-        );
+  const fetchMovies = useCallback(() => {
+    return activeGenre === 0 ? getPopularMovies() : getDiscoverMovies(activeGenre);
+  }, [activeGenre]);
+
+  const { data: movies, loading, error } = useTMDB(fetchMovies, [activeGenre]);
 
   return (
     <motion.div
@@ -38,31 +50,37 @@ export default function Movies() {
           <Film size={22} className="text-xf-red" />
           <h1 className="font-display font-black text-3xl text-white">Movies</h1>
         </div>
-        <p className="text-xf-muted text-sm">{allMovies.length} titles available</p>
+        <p className="text-xf-muted text-sm">Explore popular feature films</p>
       </div>
 
       {/* Genre filter tabs */}
       <div className="px-4 sm:px-8 lg:px-12 py-5 overflow-x-auto scrollbar-hide">
         <div className="flex gap-2 min-w-max">
-          {GENRES.map((genre) => (
+          {MOVIE_GENRES.map((genre) => (
             <button
-              key={genre}
-              onClick={() => setActiveGenre(genre)}
+              key={genre.id}
+              onClick={() => setActiveGenre(genre.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap
-                ${activeGenre === genre
+                ${activeGenre === genre.id
                   ? 'bg-xf-red text-white shadow-lg shadow-xf-red/30'
                   : 'bg-xf-card border border-white/10 text-xf-muted hover:text-white hover:border-white/30'
                 }`}
             >
-              {genre}
+              {genre.name}
             </button>
           ))}
         </div>
       </div>
 
       {/* Grid */}
-      <div className="px-4 sm:px-8 lg:px-12 pb-16">
-        {filtered.length === 0 ? (
+      <div className="px-4 sm:px-8 lg:px-12 pb-16 min-h-[50vh]">
+        {error ? (
+          <p className="text-xf-red">Failed to load movies.</p>
+        ) : loading ? (
+          <div className="mt-4">
+            <LoadingSkeleton variant="row" count={2} />
+          </div>
+        ) : !movies || movies.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <Film size={40} className="text-xf-subtle" />
             <p className="text-xf-muted">No movies found in this genre</p>
@@ -75,7 +93,7 @@ export default function Movies() {
             transition={{ duration: 0.35 }}
             className="flex flex-wrap gap-4"
           >
-            {filtered.map((movie) => (
+            {movies.map((movie) => (
               <MovieCard key={movie.id} movie={movie} />
             ))}
           </motion.div>

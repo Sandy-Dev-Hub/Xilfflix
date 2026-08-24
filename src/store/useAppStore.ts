@@ -11,7 +11,7 @@ interface AppState {
 
   // Continue Watching
   continueWatching: Record<string, WatchProgress>;
-  saveProgress: (id: string, progress: number, duration: number) => void;
+  saveProgress: (id: string, progress: number, duration: number, movieMeta?: any) => void;
   getProgress: (id: string) => WatchProgress | undefined;
   clearProgress: (id: string) => void;
 
@@ -43,12 +43,17 @@ export const useAppStore = create<AppState>()(
 
       // ── Continue Watching ─────────────────────────────────────────────────
       continueWatching: {},
-      saveProgress: (id, progress, duration) => {
+      saveProgress: (id, progress, duration, movieMeta) => {
         if (duration <= 0) return;
         set((s) => ({
           continueWatching: {
             ...s.continueWatching,
-            [id]: { progress, duration, lastWatched: Date.now() },
+            [id]: { 
+              progress, 
+              duration, 
+              lastWatched: Date.now(),
+              ...(movieMeta ? { movieMeta } : {}),
+            },
           },
         }));
       },

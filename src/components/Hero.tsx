@@ -3,18 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Plus, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Movie } from '@/types/movie';
-import { getFeatured } from '@/data/movies';
 import { useAppStore } from '@/store/useAppStore';
 
-const featured = getFeatured().slice(0, 5);
+interface HeroProps {
+  movies: Movie[];
+}
 
-export default function Hero() {
+export default function Hero({ movies }: HeroProps) {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const navigate = useNavigate();
   const { addToList, removeFromList, isInList } = useAppStore();
 
-  const movie = featured[current];
+  const movie = movies[current];
   const inList = movie ? isInList(movie.id) : false;
 
   const goTo = useCallback(
@@ -25,14 +26,15 @@ export default function Hero() {
     [current]
   );
 
-  const next = useCallback(() => goTo((current + 1) % featured.length), [current, goTo]);
-  const prev = useCallback(() => goTo((current - 1 + featured.length) % featured.length), [current, goTo]);
+  const next = useCallback(() => goTo((current + 1) % movies.length), [current, goTo, movies.length]);
+  const prev = useCallback(() => goTo((current - 1 + movies.length) % movies.length), [current, goTo, movies.length]);
 
   // Auto-cycle every 8 seconds
   useEffect(() => {
+    if (movies.length === 0) return;
     const id = setInterval(next, 8000);
     return () => clearInterval(id);
-  }, [next]);
+  }, [next, movies.length]);
 
   if (!movie) return null;
 
@@ -177,7 +179,7 @@ export default function Hero() {
 
       {/* Dot indicators */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-        {featured.map((_, i) => (
+        {movies.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}

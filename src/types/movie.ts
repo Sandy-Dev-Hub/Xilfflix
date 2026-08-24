@@ -16,10 +16,10 @@ export interface Movie {
   rating: number;
   year: number;
   runtime: number; // minutes for movies, minutes per episode for TV
-  ageRating: string;
+  ageRating?: string;
   genres: string[];
   cast: string[];
-  director: string;
+  director?: string;
   trailer?: string;
   servers: Server[];
   isFeatured?: boolean;
@@ -37,4 +37,10 @@ export interface WatchProgress {
   progress: number;   // seconds watched
   duration: number;   // total seconds
   lastWatched: number; // timestamp
+  movieMeta?: {       // Added for async TMDB support so ContinueWatching doesn't need to fetch
+    id: string;
+    title: string;
+    type: MediaType;
+    poster: string;
+  };
 }
