@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Play, Plus, Check, ThumbsUp, ChevronDown, Volume2, VolumeX } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Movie } from '@/types/movie';
 import { useAppStore } from '@/store/useAppStore';
 import Badge from './Badge';
@@ -26,7 +26,7 @@ function computePosition(anchor: DOMRect): { top: number; left: number; transfor
 
   // Center popup horizontally on the card
   let left = anchor.left + anchor.width / 2 - POPUP_WIDTH / 2;
-  // Default: popup centered vertically over card (image area aligns with card)
+  // Center popup vertically over card
   let top = anchor.top + anchor.height / 2 - POPUP_TOTAL_HEIGHT / 2;
 
   // Clamp horizontally
@@ -34,13 +34,14 @@ function computePosition(anchor: DOMRect): { top: number; left: number; transfor
   if (left < MARGIN) left = MARGIN;
   if (left + POPUP_WIDTH > vw - MARGIN) left = vw - POPUP_WIDTH - MARGIN;
 
-  // Clamp vertically — flip below card if it goes off the top
-  if (top < 70) top = anchor.bottom + 8; // below card
-  if (top + POPUP_TOTAL_HEIGHT > vh - 8) top = vh - POPUP_TOTAL_HEIGHT - 8;
+  // Smooth clamp vertically (don't jump below, just keep on screen)
+  if (top < 80) top = 80;
+  if (top + POPUP_TOTAL_HEIGHT > vh - 12) top = vh - POPUP_TOTAL_HEIGHT - 12;
 
   // Derive transform-origin based on horizontal position
   const relX = (anchor.left + anchor.width / 2 - left) / POPUP_WIDTH;
-  const transformOrigin = `${Math.round(relX * 100)}% center`;
+  // Use a fixed vertical origin near the center to make scaling feel natural
+  const transformOrigin = `${Math.round(relX * 100)}% 50%`;
 
   return { top, left, transformOrigin };
 }
@@ -63,6 +64,23 @@ export default function HoverPreview({
   const navigate = useNavigate();
 
   const { top, left, transformOrigin } = computePosition(anchorRect);
+
+  // Close the popup when the user scrolls the page (so it doesn't detach)
+  useEffect(() => {
+    const handleScroll = () => {
+      onClose();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    window.addEventListener('wheel', handleScroll, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleScroll, { passive: true, capture: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, { capture: true });
+      window.removeEventListener('wheel', handleScroll, { capture: true });
+      window.removeEventListener('touchmove', handleScroll, { capture: true });
+    };
+  }, [onClose]);
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
