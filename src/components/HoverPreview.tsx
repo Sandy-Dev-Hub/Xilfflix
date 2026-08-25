@@ -15,9 +15,9 @@ interface HoverPreviewProps {
   onClose: () => void;
 }
 
-const POPUP_WIDTH = 360;
-const POPUP_IMG_HEIGHT = Math.round(POPUP_WIDTH * 9 / 16); // 202px
-const POPUP_FOOTER_HEIGHT = 130;
+const POPUP_WIDTH = 400;
+const POPUP_IMG_HEIGHT = Math.round(POPUP_WIDTH * 9 / 16); // 225px
+const POPUP_FOOTER_HEIGHT = 160;
 const POPUP_TOTAL_HEIGHT = POPUP_IMG_HEIGHT + POPUP_FOOTER_HEIGHT;
 
 function computePosition(anchor: DOMRect): { top: number; left: number; transformOrigin: string } {
@@ -169,53 +169,53 @@ export default function HoverPreview({
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-3 space-y-2.5">
+      <div className="p-4 space-y-3.5 bg-[#181818]">
         {/* Action buttons */}
         <div className="flex items-center gap-2">
           {/* Play */}
           <button
             onClick={handlePlay}
-            className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow hover:bg-white/90 transition-colors flex-shrink-0"
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow hover:bg-white/90 transition-colors flex-shrink-0"
             aria-label={`Play ${movie.title}`}
           >
-            <Play size={14} fill="black" className="text-black ml-0.5" />
+            <Play size={18} fill="black" className="text-black ml-1" />
           </button>
           {/* My List */}
           <button
             onClick={toggleList}
-            className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-white hover:border-white transition-colors flex-shrink-0"
+            className="w-10 h-10 rounded-full border-2 border-white/40 flex items-center justify-center text-white hover:border-white hover:bg-white/10 transition-colors flex-shrink-0 bg-[#2A2A2A]/50"
             aria-label={inList ? 'Remove from My List' : 'Add to My List'}
           >
-            {inList ? <Check size={14} /> : <Plus size={14} />}
+            {inList ? <Check size={18} /> : <Plus size={18} />}
           </button>
           {/* Like */}
           <button
-            className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-white hover:border-white transition-colors flex-shrink-0"
+            className="w-10 h-10 rounded-full border-2 border-white/40 flex items-center justify-center text-white hover:border-white hover:bg-white/10 transition-colors flex-shrink-0 bg-[#2A2A2A]/50"
             aria-label="Like"
           >
-            <ThumbsUp size={13} />
+            <ThumbsUp size={16} />
           </button>
           {/* Spacer + Info chevron */}
           <button
             onClick={handleInfo}
-            className="ml-auto w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-white hover:border-white transition-colors flex-shrink-0"
+            className="ml-auto w-10 h-10 rounded-full border-2 border-white/40 flex items-center justify-center text-white hover:border-white hover:bg-white/10 transition-colors flex-shrink-0 bg-[#2A2A2A]/50"
             aria-label={`More info about ${movie.title}`}
           >
-            <ChevronDown size={15} />
+            <ChevronDown size={20} />
           </button>
         </div>
 
         {/* Metadata row */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2.5 flex-wrap pt-0.5">
           {movie.ageRating && (
-            <span className="border border-white/30 text-white/70 text-[10px] px-1.5 py-0.5 rounded">
+            <span className="border border-white/40 text-white text-xs px-1.5 py-0.5 rounded-sm font-semibold">
               {movie.ageRating}
             </span>
           )}
           {formatRuntime(movie.runtime) && (
-            <span className="text-white/70 text-[11px]">{formatRuntime(movie.runtime)}</span>
+            <span className="text-white text-sm font-medium">{formatRuntime(movie.runtime)}</span>
           )}
-          <span className="border border-blue-400/60 text-blue-300 text-[10px] px-1 rounded font-semibold">
+          <span className="border border-white/40 text-white text-[10px] px-1 py-0.5 rounded-sm font-semibold tracking-wider">
             HD
           </span>
           {movie.badges?.[0] && (
@@ -225,7 +225,7 @@ export default function HoverPreview({
 
         {/* Mood tags */}
         {movie.tags && movie.tags.length > 0 && (
-          <p className="text-white/50 text-[11px] leading-none">
+          <p className="text-white text-sm font-medium leading-tight">
             {movie.tags.slice(0, 3).join(' • ')}
           </p>
         )}
