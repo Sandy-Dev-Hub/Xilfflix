@@ -110,7 +110,10 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
   const yearStr = item.release_date || item.first_air_date || '';
   const year = yearStr ? parseInt(yearStr.split('-')[0]) : 0;
 
-  const cast = item.credits?.cast?.map((c: any) => c.name).slice(0, 5) || [];
+  const cast = item.credits?.cast?.slice(0, 5).map((c: any) => ({
+    name: c.name,
+    profilePic: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null,
+  })) || [];
   const directorObj = item.credits?.crew?.find((c: any) => c.job === 'Director');
   const resolvedGenres = resolveGenres(item.genre_ids, item.genres);
   const tags = resolvedGenres

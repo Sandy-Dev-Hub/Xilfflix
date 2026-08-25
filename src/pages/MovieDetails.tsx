@@ -192,7 +192,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
               {movie.cast.length > 0 && (
                 <div>
                   <span className="text-xf-subtle">Cast: </span>
-                  <span className="text-xf-muted">{movie.cast.join(', ')}</span>
+                  <span className="text-xf-muted">{movie.cast.map(c => c.name).join(', ')}</span>
                 </div>
               )}
             </div>
@@ -235,18 +235,26 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
           >
             <h3 className="text-white font-bold text-lg mb-4">Cast</h3>
             <div className="flex flex-wrap gap-4">
-              {movie.cast.map((name, i) => (
-                <div key={name} className="flex flex-col items-center gap-2 w-20">
-                  <div
-                    className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md border border-white/10"
-                    style={{
-                      background: `hsl(${(i * 53 + 12) % 360}, 55%, 35%)`,
-                    }}
-                  >
-                    {name.charAt(0)}
-                  </div>
+              {movie.cast.map((actor, i) => (
+                <div key={actor.name} className="flex flex-col items-center gap-2 w-20">
+                  {actor.profilePic ? (
+                    <img
+                      src={actor.profilePic}
+                      alt={actor.name}
+                      className="w-14 h-14 rounded-full object-cover shadow-md border border-white/10"
+                    />
+                  ) : (
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md border border-white/10"
+                      style={{
+                        background: `hsl(${(i * 53 + 12) % 360}, 55%, 35%)`,
+                      }}
+                    >
+                      {actor.name.charAt(0)}
+                    </div>
+                  )}
                   <span className="text-xf-muted text-xs text-center leading-tight line-clamp-2">
-                    {name}
+                    {actor.name}
                   </span>
                 </div>
               ))}

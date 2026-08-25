@@ -18,7 +18,7 @@ export interface Movie {
   runtime: number; // minutes for movies, minutes per episode for TV
   ageRating?: string;
   genres: string[];
-  cast: string[];
+  cast: { name: string; profilePic: string | null }[];
   director?: string;
   trailer?: string;
   servers: Server[];
