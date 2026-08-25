@@ -88,9 +88,10 @@ export default function Movies() {
       <div className="mt-[-40px] relative z-10 flex flex-col gap-10 pb-16">
         {SORT_VARIANTS.map(({ label, sort }) => (
           <GenreRow
-            key={`${genreId}-${sort}`}
+            key={`${genreId}-${language}-${sort}`}
             title={`${genreLabel} — ${label}`}
             genreId={genreId}
+            language={language}
             sort={sort}
             fetchMore={makeFetchMore(sort)}
           />
@@ -106,24 +107,26 @@ export default function Movies() {
 function GenreRow({
   title,
   genreId,
+  language,
   sort,
   fetchMore,
 }: {
   title: string;
   genreId?: number;
+  language?: string;
   sort: string;
   fetchMore: (page: number) => Promise<Movie[]>;
 }) {
   const fetch = useCallback(
-    () => getDiscoverMoviesPage(genreId, 1, sort),
-    [genreId, sort]
+    () => getDiscoverMoviesPage(genreId, 1, sort, language),
+    [genreId, sort, language]
   );
   const { data, loading } = useTMDB(
     async () => {
       const result = await fetch();
       return result.movies;
     },
-    [genreId, sort]
+    [genreId, sort, language]
   );
 
   if (loading) {
