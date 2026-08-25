@@ -119,12 +119,25 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     .slice(0, 3) as string[];
   const badges = deriveBadges(item);
 
+  // Resolve full-size image URLs with mutual fallback so no card ever has empty thumbnails:
+  // poster falls back to backdrop if missing, and vice versa.
+  const posterUrl = item.poster_path
+    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+    : item.backdrop_path
+    ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}`
+    : '';
+  const backdropUrl = item.backdrop_path
+    ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}`
+    : item.poster_path
+    ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+    : '';
+
   return {
     id: String(item.id),
     title: item.title || item.name || 'Unknown',
     type,
-    poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
-    backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '',
+    poster: posterUrl,
+    backdrop: backdropUrl,
     description: item.overview || 'No description available.',
     rating: item.vote_average || 0,
     year,
@@ -133,7 +146,7 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     genres: resolvedGenres,
     cast,
     director: directorObj ? directorObj.name : undefined,
-    servers: makeServers(),
+    servers: makeServers(String(item.id), type),
     tags,
     badges,
     region: 'US',
@@ -260,3 +273,56 @@ export async function searchContent(query: string): Promise<Movie[]> {
   const data = await fetchTMDB('/search/multi', { query });
   return data.results.filter((i: any) => i.media_type !== 'person').map((item: any) => normalizeTMDB(item));
 }
+
+/**
+ * Universal paginated discover for RowPreset-driven rows.
+ * Maps every RowPreset field to its corresponding TMDB query parameter.
+ * Returns movies (or TV shows) normalized via normalizeTMDB with in-memory caching.
+ */
+export async function getPresetPage(
+  preset: {
+    mediaType: 'movie' | 'tv';
+    genreIds?: number[];
+    originCountry?: string;
+    originalLanguage?: string;
+    sortBy?: string;
+    maxRuntime?: number;
+    minReleaseDate?: string;
+  },
+  page: number
+): Promise<{ movies: Movie[]; totalPages: number }> {
+  const sortBy = preset.sortBy ?? 'popularity.desc';
+  const cacheKey = `preset-${JSON.stringify(preset)}-${page}`;
+  if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
+
+  const params: Record<string, string> = { page: String(page), sort_by: sortBy };
+
+  if (preset.genreIds && preset.genreIds.length > 0) {
+    params.with_genres = preset.genreIds.join(',');
+  }
+  if (preset.originalLanguage) {
+    params.with_original_language = preset.originalLanguage;
+  }
+  if (preset.originCountry) {
+    params.with_origin_country = preset.originCountry;
+  }
+  if (preset.maxRuntime) {
+    params['with_runtime.lte'] = String(preset.maxRuntime);
+  }
+  if (preset.minReleaseDate) {
+    const field = preset.mediaType === 'tv' ? 'first_air_date.gte' : 'primary_release_date.gte';
+    params[field] = preset.minReleaseDate;
+  }
+  // Require at least 10 votes to filter out obscure entries
+  params['vote_count.gte'] = '10';
+
+  const path = `/discover/${preset.mediaType}`;
+  const data = await fetchTMDB(path, params);
+  const result = {
+    movies: (data.results ?? []).map((item: any) => normalizeTMDB(item, preset.mediaType)),
+    totalPages: data.total_pages ?? 1,
+  };
+  pageCache.set(cacheKey, result);
+  return result;
+}
+

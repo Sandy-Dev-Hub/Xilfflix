@@ -218,7 +218,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
                 id={`details-list-${movie.id}`}
               >
                 {inList ? <Check size={18} /> : <Plus size={18} />}
-                {inList ? 'In My List' : '+ My List'}
+                {inList ? 'In My List' : 'My List'}
               </motion.button>
             </div>
           </motion.div>
