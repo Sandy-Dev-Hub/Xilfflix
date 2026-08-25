@@ -38,18 +38,18 @@ export default function Movies() {
 
   // Hero data (top movies for current filter)
   const fetchHero = useCallback(() =>
-    getDiscoverMovies(genreId),
-    [genreId]
+    getDiscoverMovies(genreId, language),
+    [genreId, language]
   );
-  const { data: heroMovies, loading: heroLoading } = useTMDB(fetchHero, [genreId]);
+  const { data: heroMovies, loading: heroLoading } = useTMDB(fetchHero, [genreId, language]);
 
   // Make fetchMore factory for each sort variant
   const makeFetchMore = useCallback(
     (sort: string) => async (page: number): Promise<Movie[]> => {
-      const result = await getDiscoverMoviesPage(genreId, page, sort);
+      const result = await getDiscoverMoviesPage(genreId, page, sort, language);
       return result.movies;
     },
-    [genreId]
+    [genreId, language]
   );
 
   const genreLabel = selectedGenre ? selectedGenre.label : 'All Movies';

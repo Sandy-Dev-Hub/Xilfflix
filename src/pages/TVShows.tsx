@@ -32,18 +32,22 @@ export default function TVShows() {
     ? (typeof selectedGenre.id === 'number' ? selectedGenre.id : undefined)
     : undefined;
 
+  const language = selectedGenre?.paramType === 'language' && selectedGenre.id !== 'all'
+    ? String(selectedGenre.id)
+    : undefined;
+
   const fetchHero = useCallback(
-    () => getDiscoverTV(genreId),
-    [genreId]
+    () => getDiscoverTV(genreId, language),
+    [genreId, language]
   );
-  const { data: heroShows, loading: heroLoading } = useTMDB(fetchHero, [genreId]);
+  const { data: heroShows, loading: heroLoading } = useTMDB(fetchHero, [genreId, language]);
 
   const makeFetchMore = useCallback(
     (sort: string) => async (page: number): Promise<Movie[]> => {
-      const result = await getDiscoverTVPage(genreId, page, sort);
+      const result = await getDiscoverTVPage(genreId, page, sort, language);
       return result.movies;
     },
-    [genreId]
+    [genreId, language]
   );
 
   const genreLabel = selectedGenre ? selectedGenre.label : 'All TV Shows';

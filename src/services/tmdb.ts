@@ -190,16 +190,18 @@ export async function getNewReleases(): Promise<Movie[]> {
   return data.results.map((item: any) => normalizeTMDB(item, 'movie'));
 }
 
-export async function getDiscoverMovies(genreId?: number): Promise<Movie[]> {
+export async function getDiscoverMovies(genreId?: number, language?: string): Promise<Movie[]> {
   const params: Record<string, string> = {};
   if (genreId) params.with_genres = String(genreId);
+  if (language) params.with_original_language = language;
   const data = await fetchTMDB('/discover/movie', params);
   return data.results.map((item: any) => normalizeTMDB(item, 'movie'));
 }
 
-export async function getDiscoverTV(genreId?: number): Promise<Movie[]> {
+export async function getDiscoverTV(genreId?: number, language?: string): Promise<Movie[]> {
   const params: Record<string, string> = {};
   if (genreId) params.with_genres = String(genreId);
+  if (language) params.with_original_language = language;
   const data = await fetchTMDB('/discover/tv', params);
   return data.results.map((item: any) => normalizeTMDB(item, 'tv'));
 }
@@ -208,13 +210,15 @@ export async function getDiscoverTV(genreId?: number): Promise<Movie[]> {
 export async function getDiscoverMoviesPage(
   genreId: number | undefined,
   page: number,
-  sortBy = 'popularity.desc'
+  sortBy = 'popularity.desc',
+  language?: string
 ): Promise<{ movies: Movie[]; totalPages: number }> {
-  const cacheKey = `discover-movie-${genreId ?? 'all'}-${page}-${sortBy}`;
+  const cacheKey = `discover-movie-${genreId ?? 'all'}-${language ?? 'all'}-${page}-${sortBy}`;
   if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
 
   const params: Record<string, string> = { page: String(page), sort_by: sortBy };
   if (genreId) params.with_genres = String(genreId);
+  if (language) params.with_original_language = language;
   const data = await fetchTMDB('/discover/movie', params);
   const result = {
     movies: data.results.map((item: any) => normalizeTMDB(item, 'movie')),
@@ -228,13 +232,15 @@ export async function getDiscoverMoviesPage(
 export async function getDiscoverTVPage(
   genreId: number | undefined,
   page: number,
-  sortBy = 'popularity.desc'
+  sortBy = 'popularity.desc',
+  language?: string
 ): Promise<{ movies: Movie[]; totalPages: number }> {
-  const cacheKey = `discover-tv-${genreId ?? 'all'}-${page}-${sortBy}`;
+  const cacheKey = `discover-tv-${genreId ?? 'all'}-${language ?? 'all'}-${page}-${sortBy}`;
   if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
 
   const params: Record<string, string> = { page: String(page), sort_by: sortBy };
   if (genreId) params.with_genres = String(genreId);
+  if (language) params.with_original_language = language;
   const data = await fetchTMDB('/discover/tv', params);
   const result = {
     movies: data.results.map((item: any) => normalizeTMDB(item, 'tv')),
