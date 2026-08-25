@@ -25,6 +25,15 @@ const SORT_VARIANTS = [
   { label: 'Newest First', sort: 'primary_release_date.desc' },
 ];
 
+const MOVIE_GENRES = [
+  { id: 35, label: 'Comedy' },
+  { id: 28, label: 'Action' },
+  { id: 53, label: 'Thriller' },
+  { id: 27, label: 'Horror' },
+  { id: 10749, label: 'Romance' },
+  { id: 878, label: 'Sci-Fi' },
+];
+
 export default function Movies() {
   const [selectedGenre, setSelectedGenre] = useState<GenreOption | null>(null);
 
@@ -43,13 +52,13 @@ export default function Movies() {
   );
   const { data: heroMovies, loading: heroLoading } = useTMDB(fetchHero, [genreId, language]);
 
-  // Make fetchMore factory for each sort variant
+  // Make fetchMore factory for each row
   const makeFetchMore = useCallback(
-    (sort: string) => async (page: number): Promise<Movie[]> => {
-      const result = await getDiscoverMoviesPage(genreId, page, sort, language);
+    (rowGenreId: number | undefined, sort: string) => async (page: number): Promise<Movie[]> => {
+      const result = await getDiscoverMoviesPage(rowGenreId, page, sort, language);
       return result.movies;
     },
-    [genreId, language]
+    [language]
   );
 
   const genreLabel = selectedGenre ? selectedGenre.label : 'All Movies';
@@ -84,18 +93,43 @@ export default function Movies() {
         )}
       </div>
 
-      {/* Genre sub-rows — each with different sort for variety */}
+      {/* Rows */}
       <div className="mt-[-40px] relative z-10 flex flex-col gap-10 pb-16">
-        {SORT_VARIANTS.map(({ label, sort }) => (
-          <GenreRow
-            key={`${genreId}-${language}-${sort}`}
-            title={`${genreLabel} — ${label}`}
-            genreId={genreId}
-            language={language}
-            sort={sort}
-            fetchMore={makeFetchMore(sort)}
-          />
-        ))}
+        {language ? (
+          <>
+            <GenreRow
+              key={`upcoming-${language}`}
+              title={`Upcoming ${selectedGenre?.label} Movies`}
+              genreId={undefined}
+              language={language}
+              sort="primary_release_date.desc"
+              fetchMore={makeFetchMore(undefined, "primary_release_date.desc")}
+            />
+            {MOVIE_GENRES.map(g => (
+              <GenreRow
+                key={`${g.id}-${language}-pop`}
+                title={`${g.label} Movies`}
+                genreId={g.id}
+                language={language}
+                sort="popularity.desc"
+                fetchMore={makeFetchMore(g.id, "popularity.desc")}
+              />
+            ))}
+          </>
+        ) : (
+          <>
+            {SORT_VARIANTS.map(({ label, sort }) => (
+              <GenreRow
+                key={`${genreId}-${language}-${sort}`}
+                title={`${genreLabel} — ${label}`}
+                genreId={genreId}
+                language={language}
+                sort={sort}
+                fetchMore={makeFetchMore(genreId, sort)}
+              />
+            ))}
+          </>
+        )}
       </div>
 
       <Footer />
