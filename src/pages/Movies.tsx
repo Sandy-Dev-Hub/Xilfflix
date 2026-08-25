@@ -63,28 +63,26 @@ export default function Movies() {
       exit="exit"
       className="min-h-screen bg-xf-bg"
     >
-      {/* Page header */}
-      <div className="pt-24 pb-5 px-4 sm:px-8 lg:px-12 border-b border-white/8">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Film size={22} className="text-xf-red" />
-            <h1 className="font-display font-black text-3xl text-white">Movies</h1>
+      {/* Hero with Overlay Header */}
+      <div className="relative">
+        <div className="absolute top-24 sm:top-28 left-4 sm:left-8 lg:left-12 z-20 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 pointer-events-none">
+          <h1 className="font-display font-black text-3xl sm:text-5xl text-white drop-shadow-md">Movies</h1>
+          <div className="pointer-events-auto flex items-center gap-3">
+            <GenreDropdown selected={selectedGenre} onSelect={setSelectedGenre} />
+            {selectedGenre && (
+              <span className="text-white/80 text-sm font-medium drop-shadow-md hidden sm:block">
+                Showing: {genreLabel}
+              </span>
+            )}
           </div>
-          <GenreDropdown selected={selectedGenre} onSelect={setSelectedGenre} />
         </div>
-        {selectedGenre && (
-          <p className="text-xf-muted text-sm mt-2">
-            Showing: <span className="text-white font-medium">{selectedGenre.label}</span>
-          </p>
+
+        {heroLoading ? (
+          <LoadingSkeleton variant="hero" />
+        ) : (
+          <Hero movies={visibleHero} />
         )}
       </div>
-
-      {/* Hero banner — filtered to current genre */}
-      {heroLoading ? (
-        <LoadingSkeleton variant="hero" />
-      ) : visibleHero.length > 0 ? (
-        <Hero movies={visibleHero} />
-      ) : null}
 
       {/* Genre sub-rows — each with different sort for variety */}
       <div className="mt-[-40px] relative z-10 flex flex-col gap-10 pb-16">
