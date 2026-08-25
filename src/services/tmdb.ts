@@ -83,20 +83,24 @@ function resolveAgeRating(item: any, type: 'movie' | 'tv'): string | undefined {
   return undefined; // Do not default — omit when unavailable
 }
 
+/**
+ * Returns at most ONE badge string for a movie/show, following a strict
+ * priority order so the data model stays honest: a card "has one badge".
+ * Priority: New (just released) > Top Rated > Trending
+ */
 function deriveBadges(item: any): string[] {
-  const badges: string[] = [];
   const releaseDate = item.release_date || item.first_air_date;
   if (releaseDate) {
     const daysOld = (Date.now() - new Date(releaseDate).getTime()) / (1000 * 60 * 60 * 24);
-    if (daysOld < 45) badges.push('New');
+    if (daysOld < 45) return ['New'];
   }
   if ((item.vote_average ?? 0) >= 8.0 && (item.vote_count ?? 0) > 500) {
-    badges.push('Top Rated');
+    return ['Top Rated'];
   }
   if ((item.popularity ?? 0) > 800) {
-    badges.push('Trending');
+    return ['Trending'];
   }
-  return badges;
+  return [];
 }
 
 // ─── Normalizer ───────────────────────────────────────────────────────────────
@@ -236,7 +240,9 @@ export async function getTopRated(
   const movies: Movie[] = data.results.slice(0, 10).map((item: any, idx: number) => ({
     ...normalizeTMDB(item, type),
     topTenRank: (page - 1) * 20 + idx + 1,
-    badges: ['Top Rated', ...deriveBadges(item)].slice(0, 2),
+    // Exactly one badge: this IS the top-rated list, so always 'Top Rated'.
+    // TopTenCard adds its own 'TOP 10' ribbon separately — it's not in badges[].
+    badges: ['Top Rated'] as string[],
   }));
   const result = { movies, totalPages: data.total_pages ?? 1 };
   pageCache.set(cacheKey, result);
