@@ -86,7 +86,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
 
         {/* Back button */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="absolute top-20 left-4 sm:left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg text-sm"
         >
           <ArrowLeft size={16} />
