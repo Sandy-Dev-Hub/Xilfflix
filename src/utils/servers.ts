@@ -24,7 +24,9 @@ export function makeServers(
       {
         name: 'Server 1',
         status: 'online',
-        sourceUrl: `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`,
+        sourceUrl: tmdbId === '37941' 
+          ? `https://vidsrc.wiki/embed/movie/37941` 
+          : `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`,
       },
       {
         name: 'Server 2',
