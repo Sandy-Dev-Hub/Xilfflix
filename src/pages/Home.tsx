@@ -1,3 +1,4 @@
+import { useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Hero from '@/components/Hero';
 import MovieRow from '@/components/MovieRow';
@@ -5,13 +6,18 @@ import ContinueWatching from '@/components/ContinueWatching';
 import Footer from '@/components/Footer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import { useTMDB } from '@/hooks/useTMDB';
+import { useAppStore } from '@/store/useAppStore';
 import {
   getTrending,
   getPopularMovies,
   getNewReleases,
   getDiscoverMovies,
   getPopularTVShows,
+  getTopRated,
+  getDiscoverMoviesPage,
+  getDiscoverTVPage,
 } from '@/services/tmdb';
+import type { Movie } from '@/types/movie';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -20,21 +26,56 @@ const pageVariants = {
 };
 
 async function fetchHomeData() {
-  const [trending, popular, newRel, action, drama, comedy, sciFi, tv] = await Promise.all([
+  const [trending, popular, newRel, action, drama, comedy, sciFi, tv, topRated] = await Promise.all([
     getTrending('day'),
     getPopularMovies(),
     getNewReleases(),
-    getDiscoverMovies(28), // Action
-    getDiscoverMovies(18), // Drama
-    getDiscoverMovies(35), // Comedy
-    getDiscoverMovies(878), // Sci-Fi
+    getDiscoverMovies(28),   // Action
+    getDiscoverMovies(18),   // Drama
+    getDiscoverMovies(35),   // Comedy
+    getDiscoverMovies(878),  // Sci-Fi
     getPopularTVShows(),
+    getTopRated('movie', 1),
   ]);
-  return { trending, popular, newRel, action, drama, comedy, sciFi, tv };
+  return { trending, popular, newRel, action, drama, comedy, sciFi, tv, topRated: topRated.movies.slice(0, 10) };
 }
 
 export default function Home() {
   const { data, loading, error } = useTMDB(fetchHomeData);
+  const { seedDynamicNotifications } = useAppStore();
+
+  // Seed dynamic "New Release: ..." notifications once data loads
+  useEffect(() => {
+    if (data?.newRel && data.newRel.length > 0) {
+      seedDynamicNotifications(data.newRel);
+    }
+  }, [data?.newRel, seedDynamicNotifications]);
+
+  // Infinite-scroll fetchers for genre rows
+  const fetchMoreAction = useCallback(async (page: number): Promise<Movie[]> => {
+    const result = await getDiscoverMoviesPage(28, page);
+    return result.movies;
+  }, []);
+
+  const fetchMoreDrama = useCallback(async (page: number): Promise<Movie[]> => {
+    const result = await getDiscoverMoviesPage(18, page);
+    return result.movies;
+  }, []);
+
+  const fetchMoreComedy = useCallback(async (page: number): Promise<Movie[]> => {
+    const result = await getDiscoverMoviesPage(35, page);
+    return result.movies;
+  }, []);
+
+  const fetchMoreSciFi = useCallback(async (page: number): Promise<Movie[]> => {
+    const result = await getDiscoverMoviesPage(878, page);
+    return result.movies;
+  }, []);
+
+  const fetchMoreTV = useCallback(async (page: number): Promise<Movie[]> => {
+    const result = await getDiscoverTVPage(undefined, page);
+    return result.movies;
+  }, []);
 
   if (error) {
     return (
@@ -55,7 +96,7 @@ export default function Home() {
     );
   }
 
-  const { trending, popular, newRel, action, drama, comedy, sciFi, tv } = data;
+  const { trending, popular, newRel, action, drama, comedy, sciFi, tv, topRated } = data;
   const heroMovies = trending.slice(0, 5);
 
   return (
@@ -74,11 +115,39 @@ export default function Home() {
         <MovieRow title="Trending Now" movies={trending} />
         <MovieRow title="Popular Movies" movies={popular} />
         <MovieRow title="New Releases" movies={newRel} />
-        <MovieRow title="Action & Thrill" movies={action} />
-        <MovieRow title="Drama" movies={drama} />
-        <MovieRow title="Comedy" movies={comedy} />
-        <MovieRow title="Sci-Fi" movies={sciFi} />
-        <MovieRow title="TV Shows" movies={tv} />
+
+        {/* Top 10 row — no infinite scroll, only show 10 */}
+        <MovieRow
+          title="Top 10 in the US Today"
+          movies={topRated}
+          variant="topTen"
+        />
+
+        <MovieRow
+          title="Action & Thrill"
+          movies={action}
+          fetchMore={fetchMoreAction}
+        />
+        <MovieRow
+          title="Drama"
+          movies={drama}
+          fetchMore={fetchMoreDrama}
+        />
+        <MovieRow
+          title="Comedy"
+          movies={comedy}
+          fetchMore={fetchMoreComedy}
+        />
+        <MovieRow
+          title="Sci-Fi"
+          movies={sciFi}
+          fetchMore={fetchMoreSciFi}
+        />
+        <MovieRow
+          title="TV Shows"
+          movies={tv}
+          fetchMore={fetchMoreTV}
+        />
       </div>
 
       <Footer />

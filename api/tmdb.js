@@ -9,17 +9,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'path query parameter is required' });
   }
 
-  // Whitelist of allowed TMDB API paths to prevent open proxy abuse
+  // Whitelist of allowed TMDB API paths to prevent open proxy abuse.
+  // Only the path segment is checked; query params (page, sort_by, with_genres, etc.)
+  // are forwarded as-is, which is safe since the path gates access.
   const ALLOWED_PATHS = [
     /^\/trending\/(all|movie|tv)\/(day|week)$/,
     /^\/(movie|tv)\/(popular|top_rated|now_playing|upcoming|airing_today|on_the_air)$/,
     /^\/discover\/(movie|tv)$/,
-    /^\/search\/multi$/,
+    /^\/search\/(multi|movie|tv)$/,
     /^\/(movie|tv)\/\d+$/,
-    /^\/(movie|tv)\/\d+\/similar$/,
+    /^\/(movie|tv)\/\d+\/(similar|credits|videos|recommendations)$/,
     /^\/genre\/(movie|tv)\/list$/,
     /^\/movie\/\d+\/release_dates$/,
-    /^\/tv\/\d+\/content_ratings$/
+    /^\/tv\/\d+\/content_ratings$/,
   ];
 
   const isAllowed = ALLOWED_PATHS.some(rx => rx.test(path));

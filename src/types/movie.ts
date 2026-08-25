@@ -26,6 +26,21 @@ export interface Movie {
   isTrending?: boolean;
   isNewRelease?: boolean;
   isTopRated?: boolean;
+  // Addendum fields
+  tags?: string[];        // Mood tags derived from genres e.g. ["Tense", "Gritty", "Suspenseful"]
+  topTenRank?: number;   // 1-10 for Top 10 rows
+  region?: string;        // e.g. "US" for "Top 10 in US"
+  badges?: string[];      // e.g. ["New Release", "Trending", "Top Rated"]
+}
+
+export interface Notification {
+  id: string;
+  movieId?: string;
+  headline: string;
+  body: string;
+  timestamp: number; // unix ms
+  read: boolean;
+  thumbnailUrl?: string;
 }
 
 export interface Profile {

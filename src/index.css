@@ -93,4 +93,47 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /**
+   * Ken-Burns slow zoom effect for Hero backdrop images.
+   * Applied via class="ken-burns" on the <img> element.
+   * Disabled when prefers-reduced-motion: reduce is set.
+   */
+  .ken-burns {
+    animation: ken-burns 8s ease-in-out forwards;
+    transform-origin: center center;
+  }
+}
+
+@layer base {
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes ken-burns {
+    0% {
+      transform: scale(1) translate(0, 0);
+    }
+    100% {
+      transform: scale(1.08) translate(-1%, -1%);
+    }
+  }
+
+  /* Disable Ken-Burns for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .ken-burns {
+      animation: none;
+    }
+  }
 }

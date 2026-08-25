@@ -1,0 +1,219 @@
+import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Play, Plus, Check, ThumbsUp, ChevronDown, Volume2, VolumeX } from 'lucide-react';
+import { useState } from 'react';
+import type { Movie } from '@/types/movie';
+import { useAppStore } from '@/store/useAppStore';
+import Badge from './Badge';
+
+interface HoverPreviewProps {
+  movie: Movie;
+  anchorRect: DOMRect;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onClose: () => void;
+}
+
+const POPUP_WIDTH = 360;
+const POPUP_IMG_HEIGHT = Math.round(POPUP_WIDTH * 9 / 16); // 202px
+const POPUP_FOOTER_HEIGHT = 130;
+const POPUP_TOTAL_HEIGHT = POPUP_IMG_HEIGHT + POPUP_FOOTER_HEIGHT;
+
+function computePosition(anchor: DOMRect): { top: number; left: number; transformOrigin: string } {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // Center popup horizontally on the card
+  let left = anchor.left + anchor.width / 2 - POPUP_WIDTH / 2;
+  // Default: popup centered vertically over card (image area aligns with card)
+  let top = anchor.top + anchor.height / 2 - POPUP_TOTAL_HEIGHT / 2;
+
+  // Clamp horizontally
+  const MARGIN = 12;
+  if (left < MARGIN) left = MARGIN;
+  if (left + POPUP_WIDTH > vw - MARGIN) left = vw - POPUP_WIDTH - MARGIN;
+
+  // Clamp vertically — flip below card if it goes off the top
+  if (top < 70) top = anchor.bottom + 8; // below card
+  if (top + POPUP_TOTAL_HEIGHT > vh - 8) top = vh - POPUP_TOTAL_HEIGHT - 8;
+
+  // Derive transform-origin based on horizontal position
+  const relX = (anchor.left + anchor.width / 2 - left) / POPUP_WIDTH;
+  const transformOrigin = `${Math.round(relX * 100)}% center`;
+
+  return { top, left, transformOrigin };
+}
+
+// Respect prefers-reduced-motion
+const prefersReducedMotion =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+export default function HoverPreview({
+  movie,
+  anchorRect,
+  onMouseEnter,
+  onMouseLeave,
+  onClose,
+}: HoverPreviewProps) {
+  const { addToList, removeFromList, isInList } = useAppStore();
+  const inList = isInList(movie.id);
+  const [muted, setMuted] = useState(true);
+  const navigate = useNavigate();
+
+  const { top, left, transformOrigin } = computePosition(anchorRect);
+
+  const handlePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+    navigate(`/watch/${movie.type}/${movie.id}`);
+  };
+
+  const handleInfo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+    navigate(`/${movie.type}/${movie.id}`);
+  };
+
+  const toggleList = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (inList) removeFromList(movie.id);
+    else addToList(movie);
+  };
+
+  const formatRuntime = (min: number) => {
+    if (!min) return null;
+    return `${Math.floor(min / 60)}h ${min % 60}m`;
+  };
+
+  const thumbSrc = movie.backdrop || movie.poster || '';
+
+  const animProps = prefersReducedMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.15 } }
+    : {
+        initial: { opacity: 0, scale: 0.88, y: 10 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.88, y: 10 },
+        transition: { duration: 0.2, ease: 'easeOut' },
+      };
+
+  const popup = (
+    <motion.div
+      {...animProps}
+      style={{
+        position: 'fixed',
+        top,
+        left,
+        width: POPUP_WIDTH,
+        zIndex: 9999,
+        transformOrigin,
+      }}
+      className="rounded-lg overflow-hidden shadow-2xl shadow-black/70 bg-[#181818] border border-white/10"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {/* Image area */}
+      <div className="relative w-full" style={{ height: POPUP_IMG_HEIGHT }}>
+        {thumbSrc ? (
+          <img
+            src={thumbSrc}
+            alt={movie.title}
+            className="w-full h-full object-cover"
+            loading="eager"
+          />
+        ) : (
+          <div className="w-full h-full bg-xf-card flex items-center justify-center">
+            <span className="text-xf-subtle text-sm">{movie.title}</span>
+          </div>
+        )}
+        {/* Gradient overlay at bottom */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#181818]/80 to-transparent" />
+
+        {/* XILFFLIX watermark */}
+        <span className="absolute top-2 left-2.5 font-display font-black text-xs tracking-tighter text-white/60 select-none">
+          <span className="text-xf-red">X</span>ILFFLIX
+        </span>
+
+        {/* Mute/unmute toggle */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white/70 hover:text-white hover:bg-black/70 transition-colors"
+          aria-label={muted ? 'Unmute preview' : 'Mute preview'}
+        >
+          {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
+        </button>
+
+        {/* Title at bottom-left of image */}
+        <p className="absolute bottom-2 left-3 right-10 text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow">
+          {movie.title}
+        </p>
+      </div>
+
+      {/* Footer */}
+      <div className="px-3 py-3 space-y-2.5">
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          {/* Play */}
+          <button
+            onClick={handlePlay}
+            className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow hover:bg-white/90 transition-colors flex-shrink-0"
+            aria-label={`Play ${movie.title}`}
+          >
+            <Play size={14} fill="black" className="text-black ml-0.5" />
+          </button>
+          {/* My List */}
+          <button
+            onClick={toggleList}
+            className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-white hover:border-white transition-colors flex-shrink-0"
+            aria-label={inList ? 'Remove from My List' : 'Add to My List'}
+          >
+            {inList ? <Check size={14} /> : <Plus size={14} />}
+          </button>
+          {/* Like */}
+          <button
+            className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-white hover:border-white transition-colors flex-shrink-0"
+            aria-label="Like"
+          >
+            <ThumbsUp size={13} />
+          </button>
+          {/* Spacer + Info chevron */}
+          <button
+            onClick={handleInfo}
+            className="ml-auto w-8 h-8 rounded-full border border-white/40 flex items-center justify-center text-white hover:border-white transition-colors flex-shrink-0"
+            aria-label={`More info about ${movie.title}`}
+          >
+            <ChevronDown size={15} />
+          </button>
+        </div>
+
+        {/* Metadata row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {movie.ageRating && (
+            <span className="border border-white/30 text-white/70 text-[10px] px-1.5 py-0.5 rounded">
+              {movie.ageRating}
+            </span>
+          )}
+          {formatRuntime(movie.runtime) && (
+            <span className="text-white/70 text-[11px]">{formatRuntime(movie.runtime)}</span>
+          )}
+          <span className="border border-blue-400/60 text-blue-300 text-[10px] px-1 rounded font-semibold">
+            HD
+          </span>
+          {movie.badges?.[0] && (
+            <Badge label={movie.badges[0]} color="red" size="xs" />
+          )}
+        </div>
+
+        {/* Mood tags */}
+        {movie.tags && movie.tags.length > 0 && (
+          <p className="text-white/50 text-[11px] leading-none">
+            {movie.tags.slice(0, 3).join(' • ')}
+          </p>
+        )}
+      </div>
+    </motion.div>
+  );
+
+  return createPortal(popup, document.body);
+}

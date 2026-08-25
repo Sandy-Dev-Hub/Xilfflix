@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Movie, Profile, WatchProgress } from '@/types/movie';
+import type { Movie, Notification, Profile, WatchProgress } from '@/types/movie';
+import { STATIC_NOTIFICATIONS } from '@/data/notifications';
 
 interface AppState {
   // My List
@@ -24,6 +25,13 @@ interface AppState {
   setSearchOpen: (open: boolean) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+
+  // Notifications
+  notifications: Notification[];
+  unreadCount: () => number;
+  markRead: (id: string) => void;
+  markAllRead: () => void;
+  seedDynamicNotifications: (movies: Movie[]) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -48,9 +56,9 @@ export const useAppStore = create<AppState>()(
         set((s) => ({
           continueWatching: {
             ...s.continueWatching,
-            [id]: { 
-              progress, 
-              duration, 
+            [id]: {
+              progress,
+              duration,
               lastWatched: Date.now(),
               ...(movieMeta ? { movieMeta } : {}),
             },
@@ -74,6 +82,42 @@ export const useAppStore = create<AppState>()(
       setSearchOpen: (open) => set({ searchOpen: open }),
       searchQuery: '',
       setSearchQuery: (q) => set({ searchQuery: q }),
+
+      // ── Notifications ─────────────────────────────────────────────────────
+      notifications: STATIC_NOTIFICATIONS,
+      unreadCount: () => get().notifications.filter((n) => !n.read).length,
+      markRead: (id) =>
+        set((s) => ({
+          notifications: s.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
+          ),
+        })),
+      markAllRead: () =>
+        set((s) => ({
+          notifications: s.notifications.map((n) => ({ ...n, read: true })),
+        })),
+      // Called once when TMDB new-release data loads — injects dynamic notifications
+      seedDynamicNotifications: (movies) => {
+        set((s) => {
+          const existingIds = new Set(s.notifications.map((n) => n.id));
+          const dynamic: Notification[] = movies.slice(0, 3).map((m) => ({
+            id: `notif-newrelease-${m.id}`,
+            movieId: m.id,
+            headline: `Now Available: ${m.title}`,
+            body: `${m.genres.slice(0, 2).join(' · ')} · ${m.year}. Just added to Xilfflix.`,
+            timestamp: Date.now() - Math.random() * 1000 * 60 * 60, // within last hour
+            read: false,
+            thumbnailUrl: m.poster || undefined,
+          })).filter((n) => !existingIds.has(n.id));
+
+          if (dynamic.length === 0) return {};
+          return {
+            notifications: [...dynamic, ...s.notifications].sort(
+              (a, b) => b.timestamp - a.timestamp
+            ),
+          };
+        });
+      },
     }),
     {
       name: 'xilfflix-state',
@@ -81,6 +125,7 @@ export const useAppStore = create<AppState>()(
         myList: state.myList,
         continueWatching: state.continueWatching,
         profile: state.profile,
+        notifications: state.notifications,
       }),
     }
   )

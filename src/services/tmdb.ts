@@ -1,6 +1,8 @@
 import type { Movie } from '@/types/movie';
 import { makeServers } from '@/utils/servers';
 
+// ─── Genre mappings ───────────────────────────────────────────────────────────
+
 const GENRE_MAP: Record<number, string> = {
   28: 'Action',
   12: 'Adventure',
@@ -26,6 +28,37 @@ const GENRE_MAP: Record<number, string> = {
   10768: 'War & Politics',
 };
 
+/** Mood tags derived from genre names — shown in the hover preview popup */
+const GENRE_MOOD_TAGS: Record<string, string> = {
+  'Action': 'Exciting',
+  'Adventure': 'Epic',
+  'Animation': 'Creative',
+  'Comedy': 'Funny',
+  'Crime': 'Gritty',
+  'Documentary': 'Eye-opening',
+  'Drama': 'Compelling',
+  'Family': 'Wholesome',
+  'Fantasy': 'Magical',
+  'History': 'Captivating',
+  'Horror': 'Chilling',
+  'Music': 'Uplifting',
+  'Mystery': 'Intriguing',
+  'Romance': 'Heartfelt',
+  'Sci-Fi': 'Futuristic',
+  'Sci-Fi & Fantasy': 'Mind-bending',
+  'Thriller': 'Tense',
+  'War': 'Intense',
+  'Western': 'Classic',
+  'Action & Adventure': 'Thrilling',
+  'War & Politics': 'Powerful',
+};
+
+// ─── In-memory page cache ─────────────────────────────────────────────────────
+// Prevents re-fetching already-loaded pages when the user scrolls back and forth.
+const pageCache = new Map<string, { movies: Movie[]; totalPages: number }>();
+
+// ─── Helper utilities ─────────────────────────────────────────────────────────
+
 function resolveGenres(genreIds?: number[], genres?: any[]): string[] {
   if (genres && genres.length > 0) {
     return genres.map((g) => g.name);
@@ -47,34 +80,63 @@ function resolveAgeRating(item: any, type: 'movie' | 'tv'): string | undefined {
     const usRating = item.content_ratings.results.find((r: any) => r.iso_3166_1 === 'US');
     if (usRating?.rating) return usRating.rating;
   }
-  return undefined; // Do not default to PG-13 per user instructions
+  return undefined; // Do not default — omit when unavailable
 }
+
+function deriveBadges(item: any): string[] {
+  const badges: string[] = [];
+  const releaseDate = item.release_date || item.first_air_date;
+  if (releaseDate) {
+    const daysOld = (Date.now() - new Date(releaseDate).getTime()) / (1000 * 60 * 60 * 24);
+    if (daysOld < 45) badges.push('New');
+  }
+  if ((item.vote_average ?? 0) >= 8.0 && (item.vote_count ?? 0) > 500) {
+    badges.push('Top Rated');
+  }
+  if ((item.popularity ?? 0) > 800) {
+    badges.push('Trending');
+  }
+  return badges;
+}
+
+// ─── Normalizer ───────────────────────────────────────────────────────────────
 
 export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
   const type = forceType || item.media_type || (item.first_air_date ? 'tv' : 'movie');
   const yearStr = item.release_date || item.first_air_date || '';
   const year = yearStr ? parseInt(yearStr.split('-')[0]) : 0;
-  
+
   const cast = item.credits?.cast?.map((c: any) => c.name).slice(0, 5) || [];
   const directorObj = item.credits?.crew?.find((c: any) => c.job === 'Director');
-  
+  const resolvedGenres = resolveGenres(item.genre_ids, item.genres);
+  const tags = resolvedGenres
+    .map((g) => GENRE_MOOD_TAGS[g])
+    .filter(Boolean)
+    .slice(0, 3) as string[];
+  const badges = deriveBadges(item);
+
   return {
     id: String(item.id),
     title: item.title || item.name || 'Unknown',
     type,
     poster: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : '',
-    backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : '',
+    backdrop: item.backdrop_path ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}` : '',
     description: item.overview || 'No description available.',
     rating: item.vote_average || 0,
     year,
     runtime: item.runtime || (item.episode_run_time && item.episode_run_time[0]) || 0,
     ageRating: resolveAgeRating(item, type),
-    genres: resolveGenres(item.genre_ids, item.genres),
+    genres: resolvedGenres,
     cast,
     director: directorObj ? directorObj.name : undefined,
     servers: makeServers(),
+    tags,
+    badges,
+    region: 'US',
   };
 }
+
+// ─── Core fetch helper ────────────────────────────────────────────────────────
 
 async function fetchTMDB(path: string, params: Record<string, string> = {}) {
   const query = new URLSearchParams({ path, ...params });
@@ -85,6 +147,8 @@ async function fetchTMDB(path: string, params: Record<string, string> = {}) {
   }
   return response.json();
 }
+
+// ─── Public API endpoints ─────────────────────────────────────────────────────
 
 export async function getTrending(timeWindow: 'day' | 'week' = 'day'): Promise<Movie[]> {
   const data = await fetchTMDB(`/trending/all/${timeWindow}`);
@@ -118,6 +182,65 @@ export async function getDiscoverTV(genreId?: number): Promise<Movie[]> {
   if (genreId) params.with_genres = String(genreId);
   const data = await fetchTMDB('/discover/tv', params);
   return data.results.map((item: any) => normalizeTMDB(item, 'tv'));
+}
+
+/** Paginated discover for infinite-scroll rows. Results are cached in-memory. */
+export async function getDiscoverMoviesPage(
+  genreId: number | undefined,
+  page: number,
+  sortBy = 'popularity.desc'
+): Promise<{ movies: Movie[]; totalPages: number }> {
+  const cacheKey = `discover-movie-${genreId ?? 'all'}-${page}-${sortBy}`;
+  if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
+
+  const params: Record<string, string> = { page: String(page), sort_by: sortBy };
+  if (genreId) params.with_genres = String(genreId);
+  const data = await fetchTMDB('/discover/movie', params);
+  const result = {
+    movies: data.results.map((item: any) => normalizeTMDB(item, 'movie')),
+    totalPages: data.total_pages ?? 1,
+  };
+  pageCache.set(cacheKey, result);
+  return result;
+}
+
+/** Paginated discover TV for infinite-scroll rows. Results are cached in-memory. */
+export async function getDiscoverTVPage(
+  genreId: number | undefined,
+  page: number,
+  sortBy = 'popularity.desc'
+): Promise<{ movies: Movie[]; totalPages: number }> {
+  const cacheKey = `discover-tv-${genreId ?? 'all'}-${page}-${sortBy}`;
+  if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
+
+  const params: Record<string, string> = { page: String(page), sort_by: sortBy };
+  if (genreId) params.with_genres = String(genreId);
+  const data = await fetchTMDB('/discover/tv', params);
+  const result = {
+    movies: data.results.map((item: any) => normalizeTMDB(item, 'tv')),
+    totalPages: data.total_pages ?? 1,
+  };
+  pageCache.set(cacheKey, result);
+  return result;
+}
+
+/** Fetch top-rated content (movie or tv). Used for Top 10 row. Results cached. */
+export async function getTopRated(
+  type: 'movie' | 'tv' = 'movie',
+  page = 1
+): Promise<{ movies: Movie[]; totalPages: number }> {
+  const cacheKey = `topRated-${type}-${page}`;
+  if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
+
+  const data = await fetchTMDB(`/${type}/top_rated`, { page: String(page) });
+  const movies: Movie[] = data.results.slice(0, 10).map((item: any, idx: number) => ({
+    ...normalizeTMDB(item, type),
+    topTenRank: (page - 1) * 20 + idx + 1,
+    badges: ['Top Rated', ...deriveBadges(item)].slice(0, 2),
+  }));
+  const result = { movies, totalPages: data.total_pages ?? 1 };
+  pageCache.set(cacheKey, result);
+  return result;
 }
 
 export async function getMovieDetails(id: string, type: 'movie' | 'tv'): Promise<Movie> {

@@ -1,138 +1,139 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Check, ThumbsUp } from 'lucide-react';
 import type { Movie } from '@/types/movie';
-import { useAppStore } from '@/store/useAppStore';
+import HoverPreview from './HoverPreview';
+import Badge from './Badge';
 
 interface MovieCardProps {
   movie: Movie;
   size?: 'sm' | 'md';
+  /** When true, renders a compact poster (2:3) — used in search results */
+  posterMode?: boolean;
 }
 
-export default function MovieCard({ movie, size = 'md' }: MovieCardProps) {
-  const [hovered, setHovered] = useState(false);
+export default function MovieCard({ movie, size = 'md', posterMode = false }: MovieCardProps) {
   const [imgError, setImgError] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [cardRect, setCardRect] = useState<DOMRect | null>(null);
   const navigate = useNavigate();
-  const { addToList, removeFromList, isInList } = useAppStore();
-  const inList = isInList(movie.id);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = () => {
-    timerRef.current = setTimeout(() => setHovered(true), 300);
+  // Hover-delay timers
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimers = () => {
+    if (openTimer.current) clearTimeout(openTimer.current);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
   };
-  const handleMouseLeave = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
+
+  const handleMouseEnter = useCallback(() => {
+    clearTimers();
+    openTimer.current = setTimeout(() => {
+      if (cardRef.current) {
+        setCardRect(cardRef.current.getBoundingClientRect());
+        setHovered(true);
+      }
+    }, 300);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    clearTimers();
+    // Give 120ms grace period so mouse can move to preview without closing
+    closeTimer.current = setTimeout(() => {
+      setHovered(false);
+    }, 120);
+  }, []);
+
+  /** Called by HoverPreview when mouse enters — cancels the pending close */
+  const handlePreviewEnter = useCallback(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  }, []);
+
+  /** Called by HoverPreview when mouse leaves */
+  const handlePreviewLeave = useCallback(() => {
     setHovered(false);
+  }, []);
+
+  const handleClick = () => navigate(`/${movie.type}/${movie.id}`);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') handleClick();
   };
 
-  const toggleList = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (inList) removeFromList(movie.id);
-    else addToList(movie);
-  };
+  // Thumbnail: prefer backdrop (16:9) for standard cards; fallback to poster if missing
+  const thumbSrc = !imgError
+    ? (posterMode ? movie.poster : (movie.backdrop || movie.poster)) || ''
+    : '';
 
-  const handlePlay = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/watch/${movie.type}/${movie.id}`);
-  };
+  // Sizing
+  const widthClass = posterMode
+    ? (size === 'sm' ? 'w-[130px]' : 'w-[160px] sm:w-[180px]')
+    : (size === 'sm' ? 'w-[220px]' : 'w-[260px] sm:w-[280px] lg:w-[300px]');
 
-  const w = size === 'sm' ? 'w-[140px]' : 'w-[170px] sm:w-[190px] md:w-[210px]';
-  const formatRuntime = (min: number) => `${Math.floor(min / 60)}h ${min % 60}m`;
+  const aspectClass = posterMode ? '' : '';
+  const aspectStyle = posterMode ? { aspectRatio: '2/3' } : { aspectRatio: '16/9' };
+
+  const badge = movie.badges?.[0];
 
   return (
-    <div
-      className={`relative ${w} flex-shrink-0 cursor-pointer`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={() => navigate(`/${movie.type}/${movie.id}`)}
-      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/${movie.type}/${movie.id}`)}
-      tabIndex={0}
-      role="button"
-      aria-label={`${movie.title} (${movie.year})`}
-    >
-      <motion.div
-        animate={{
-          scale: hovered ? 1.08 : 1,
-          zIndex: hovered ? 30 : 1,
-        }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="relative rounded-lg overflow-hidden bg-xf-card shadow-md"
-        style={{ aspectRatio: '2/3' }}
+    <>
+      <div
+        ref={cardRef}
+        className={`relative ${widthClass} flex-shrink-0 cursor-pointer group/card`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-label={`${movie.title} (${movie.year})`}
       >
-        {/* Poster */}
-        {!imgError ? (
-          <img
-            src={movie.poster}
-            alt={movie.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-300"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-xf-card text-center px-2">
-            <span className="text-xf-subtle text-xs font-medium">{movie.title}</span>
-          </div>
-        )}
-
-        {/* Hover overlay */}
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col justify-end p-2.5"
-            >
-              {/* Action icons */}
-              <div className="flex gap-2 mb-2">
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handlePlay}
-                  className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg"
-                  aria-label="Play"
-                >
-                  <Play size={14} fill="black" className="text-black ml-0.5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={toggleList}
-                  className="w-8 h-8 rounded-full bg-xf-card/80 border border-white/30 flex items-center justify-center"
-                  aria-label={inList ? 'Remove from list' : 'Add to list'}
-                >
-                  {inList ? <Check size={14} className="text-white" /> : <Plus size={14} className="text-white" />}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-8 h-8 rounded-full bg-xf-card/80 border border-white/30 flex items-center justify-center"
-                  aria-label="Like"
-                >
-                  <ThumbsUp size={13} className="text-white" />
-                </motion.button>
-              </div>
-
-              {/* Info */}
-              <p className="text-white font-semibold text-xs leading-tight truncate mb-1">{movie.title}</p>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-green-400 text-xs font-semibold">{movie.rating.toFixed(1)}★</span>
-                <span className="text-xf-muted text-xs">{movie.year}</span>
-                <span className="text-xf-muted text-xs">{formatRuntime(movie.runtime)}</span>
-              </div>
-              <div className="flex gap-1 mt-1 flex-wrap">
-                {movie.genres.slice(0, 2).map((g) => (
-                  <span key={g} className="text-xf-subtle text-[10px]">
-                    {g}
-                  </span>
-                ))}
-              </div>
-            </motion.div>
+        <div
+          className={`relative rounded-md overflow-hidden bg-xf-card shadow-md transition-transform duration-200 group-hover/card:scale-[1.03] ${aspectClass}`}
+          style={aspectStyle}
+        >
+          {/* Thumbnail */}
+          {thumbSrc ? (
+            <img
+              src={thumbSrc}
+              alt={movie.title}
+              loading="lazy"
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-xf-card text-center px-2">
+              <span className="text-xf-subtle text-xs font-medium">{movie.title}</span>
+            </div>
           )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
+
+          {/* Badge ribbon (top-left corner) */}
+          {badge && (
+            <div className="absolute top-1.5 left-1.5 z-10">
+              <Badge label={badge} color="red" size="xs" />
+            </div>
+          )}
+
+          {/* Subtle hover bottom-fade (non-popup subtle cue) */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-200" />
+        </div>
+
+        {/* Title shown below card in poster mode */}
+        {posterMode && (
+          <p className="mt-1.5 text-white text-xs font-medium truncate px-0.5">{movie.title}</p>
+        )}
+      </div>
+
+      {/* Portal-based hover preview — lives outside row's overflow container */}
+      {hovered && cardRect && (
+        <HoverPreview
+          movie={movie}
+          anchorRect={cardRect}
+          onMouseEnter={handlePreviewEnter}
+          onMouseLeave={handlePreviewLeave}
+          onClose={() => setHovered(false)}
+        />
+      )}
+    </>
   );
 }

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import ProfileMenu from './ProfileMenu';
+import NotificationPanel from './NotificationPanel';
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
@@ -17,8 +18,10 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const { setSearchOpen, profile } = useAppStore();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const { setSearchOpen, profile, unreadCount } = useAppStore();
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   // Transparent → opaque on scroll
@@ -34,6 +37,9 @@ export default function Navbar() {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
       }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -42,7 +48,10 @@ export default function Navbar() {
   const handleSearchClick = () => {
     setSearchOpen(true);
     setMobileOpen(false);
+    setNotifOpen(false);
   };
+
+  const unread = unreadCount();
 
   return (
     <motion.nav
@@ -69,28 +78,42 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop nav links */}
-          <nav className="hidden lg:flex items-center gap-1 ml-8" aria-label="Primary navigation">
+          {/* Desktop nav links with sliding pill capsule */}
+          <nav className="hidden lg:flex items-center gap-0.5 ml-8" aria-label="Primary navigation">
             {NAV_LINKS.map(({ label, to }) => (
               <NavLink
                 key={to}
                 to={to}
                 end={to === '/'}
-                className={({ isActive }) =>
-                  `px-3 py-2 text-sm font-medium rounded transition-colors duration-200 ${
-                    isActive
-                      ? 'text-white'
-                      : 'text-xf-muted hover:text-white'
-                  }`
-                }
+                aria-current={undefined} // set dynamically below
               >
-                {label}
+                {({ isActive }) => (
+                  <span
+                    className="relative inline-flex items-center px-4 py-1.5 text-sm font-medium cursor-pointer select-none"
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {isActive && (
+                      <motion.span
+                        layoutId="nav-pill"
+                        className="absolute inset-0 rounded-full bg-[#2E2E2E]"
+                        transition={{ type: 'spring', bounce: 0.18, duration: 0.38 }}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 transition-colors duration-150 ${
+                        isActive ? 'text-white' : 'text-xf-muted hover:text-white'
+                      }`}
+                    >
+                      {label}
+                    </span>
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
 
           {/* Right section */}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-1.5 ml-auto">
             {/* Search */}
             <button
               onClick={handleSearchClick}
@@ -102,17 +125,33 @@ export default function Navbar() {
             </button>
 
             {/* Notifications */}
-            <button
-              className="hidden sm:flex p-2 text-xf-muted hover:text-white transition-colors duration-200 rounded-full hover:bg-white/10"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-            </button>
+            <div className="hidden sm:block relative" ref={notifRef}>
+              <button
+                onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
+                className="relative p-2 text-xf-muted hover:text-white transition-colors duration-200 rounded-full hover:bg-white/10"
+                aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+                aria-expanded={notifOpen}
+              >
+                <Bell size={20} />
+                {/* Unread badge */}
+                {unread > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-xf-red rounded-full flex items-center justify-center text-white text-[9px] font-bold leading-none">
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {notifOpen && (
+                  <NotificationPanel onClose={() => setNotifOpen(false)} />
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Profile */}
             <div className="relative hidden lg:block" ref={profileRef}>
               <button
-                onClick={() => setProfileOpen(!profileOpen)}
+                onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
                 className="flex items-center gap-2 group"
                 aria-label="Profile menu"
                 aria-expanded={profileOpen}
