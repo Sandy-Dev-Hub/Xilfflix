@@ -11,7 +11,7 @@ interface MovieCardProps {
   posterMode?: boolean;
 }
 
-export default function MovieCard({ movie, size = 'md', posterMode = false }: MovieCardProps) {
+export default function MovieCard({ movie, size = 'md', posterMode = true }: MovieCardProps) {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [cardRect, setCardRect] = useState<DOMRect | null>(null);
@@ -115,7 +115,16 @@ export default function MovieCard({ movie, size = 'md', posterMode = false }: Mo
           )}
 
           {/* Subtle hover bottom-fade (non-popup subtle cue) */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-200" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 transition-opacity duration-200" />
+
+          {/* Title overlay for 16:9 cards (since backdrops lack titles) */}
+          {!posterMode && thumbSrc && (
+            <div className="absolute bottom-0 left-0 right-0 p-2 z-10">
+              <p className="text-white text-[13px] font-semibold leading-tight line-clamp-2 drop-shadow-md">
+                {movie.title}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Title shown below card in poster mode */}
