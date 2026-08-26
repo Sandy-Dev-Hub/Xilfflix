@@ -165,12 +165,9 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
               key={iframeKey}
               src={activeServer?.sourceUrl}
               title={`${movie.title} — ${activeServer?.name}`}
-              className="w-full aspect-video"
-              allowFullScreen={true}
-              webkitAllowFullScreen={true}
-              mozAllowFullScreen={true}
-              allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="origin"
+              className="w-full h-full aspect-video border-0"
+              allowFullScreen
+              allow="autoplay; fullscreen; picture-in-picture"
               onError={() => setIframeError(true)}
             />
           )}
