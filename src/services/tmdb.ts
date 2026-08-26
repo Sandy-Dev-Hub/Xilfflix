@@ -121,7 +121,8 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     .filter(Boolean)
     .slice(0, 3) as string[];
   const badges = deriveBadges(item);
-  const similar = item.similar?.results?.map((s: any) => normalizeTMDB(s, type)) || [];
+  const recData = item.recommendations?.results?.length > 0 ? item.recommendations.results : item.similar?.results;
+  const similar = recData?.map((s: any) => normalizeTMDB(s, type)) || [];
 
   // Resolve full-size image URLs with mutual fallback so no card ever has empty thumbnails:
   // poster falls back to backdrop if missing, and vice versa.
@@ -274,7 +275,7 @@ export async function getTopRated(
 }
 
 export async function getMovieDetails(id: string, type: 'movie' | 'tv'): Promise<Movie> {
-  const append = type === 'movie' ? 'credits,release_dates,similar' : 'credits,content_ratings,similar';
+  const append = type === 'movie' ? 'credits,release_dates,similar,recommendations' : 'credits,content_ratings,similar,recommendations';
   const data = await fetchTMDB(`/${type}/${id}`, { append_to_response: append });
   return normalizeTMDB(data, type);
 }

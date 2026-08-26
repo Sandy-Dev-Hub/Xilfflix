@@ -26,7 +26,7 @@ export function makeServers(
     if (tmdbId === '37941') {
       server1Url = `https://vidsrc.wiki/embed/movie/37941`;
     } else if (tmdbId === '329135') {
-      server1Url = `https://freeflix.cc/movie/o-kadhal-kanmani-329135`;
+      server1Url = `https://vidsrc.wiki/embed/movie/329135`;
     }
 
     return [

@@ -127,9 +127,10 @@ export default function HoverPreview({
         zIndex: 9999,
         transformOrigin,
       }}
-      className="rounded-lg overflow-hidden shadow-2xl shadow-black/70 bg-[#181818] border border-white/10"
+      className="rounded-lg overflow-hidden shadow-2xl shadow-black/70 bg-[#181818] border border-white/10 cursor-pointer"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={handleInfo}
     >
       {/* Image area */}
       <div className="relative w-full" style={{ height: POPUP_IMG_HEIGHT }}>
