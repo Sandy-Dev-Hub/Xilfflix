@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Plus, Check, Info, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
+import { Play, Plus, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Movie } from '@/types/movie';
 import { useAppStore } from '@/store/useAppStore';
 import Badge from './Badge';
@@ -17,7 +17,6 @@ const prefersReducedMotion =
 export default function Hero({ movies }: HeroProps) {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [muted, setMuted] = useState(true);
   const navigate = useNavigate();
   const { addToList, removeFromList, isInList } = useAppStore();
 
@@ -80,7 +79,7 @@ export default function Hero({ movies }: HeroProps) {
             key={`backdrop-${movie.id}`}
             src={movie.backdrop}
             alt={movie.title}
-            className={`w-full h-full object-cover object-center ${!prefersReducedMotion ? 'ken-burns' : ''}`}
+            className={`w-full h-full object-cover object-top ${!prefersReducedMotion ? 'ken-burns' : ''}`}
             loading="eager"
           />
         </motion.div>
@@ -91,14 +90,7 @@ export default function Hero({ movies }: HeroProps) {
       <div className="absolute inset-0 bg-gradient-to-t from-xf-bg via-transparent to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent" />
 
-      {/* Mute/unmute control (top-right) */}
-      <button
-        onClick={() => setMuted(!muted)}
-        className="absolute top-20 right-4 sm:right-8 z-20 w-9 h-9 rounded-full bg-black/50 border border-white/30 flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-        aria-label={muted ? 'Unmute preview' : 'Mute preview'}
-      >
-        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-      </button>
+
 
       {/* Content */}
       <div className="relative h-full flex items-center">

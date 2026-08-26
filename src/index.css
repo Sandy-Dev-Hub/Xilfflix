@@ -101,7 +101,7 @@
    */
   .ken-burns {
     animation: ken-burns 8s ease-in-out forwards;
-    transform-origin: center center;
+    transform-origin: top center;
   }
 }
 
@@ -126,7 +126,7 @@
       transform: scale(1) translate(0, 0);
     }
     100% {
-      transform: scale(1.08) translate(-1%, -1%);
+      transform: scale(1.06) translate(0, 0);
     }
   }
 

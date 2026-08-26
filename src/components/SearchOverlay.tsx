@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
@@ -13,6 +13,12 @@ export default function SearchOverlay() {
   const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Close search overlay on route change (e.g. when clicking a HoverPreview popup)
+  useEffect(() => {
+    setSearchOpen(false);
+  }, [location.pathname, setSearchOpen]);
 
   // Debounce search input
   useEffect(() => {
