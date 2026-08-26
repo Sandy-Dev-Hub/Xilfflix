@@ -20,13 +20,20 @@ export function makeServers(
   }
 
   if (mediaType === 'movie') {
+    let server1Url = `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`;
+    
+    // Custom overrides for specific movies
+    if (tmdbId === '37941') {
+      server1Url = `https://vidsrc.wiki/embed/movie/37941`;
+    } else if (tmdbId === '329135') {
+      server1Url = `https://freeflix.cc/movie/o-kadhal-kanmani-329135`;
+    }
+
     return [
       {
         name: 'Server 1',
         status: 'online',
-        sourceUrl: tmdbId === '37941' 
-          ? `https://vidsrc.wiki/embed/movie/37941` 
-          : `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`,
+        sourceUrl: server1Url,
       },
       {
         name: 'Server 2',
