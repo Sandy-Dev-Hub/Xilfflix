@@ -68,7 +68,7 @@ export default function Hero({ movies }: HeroProps) {
         <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-4 gap-4 pb-4">
           {movies.map((m) => {
             const isAdded = isInList(m.id);
-            const cardTags = [m.genres[0], ...m.tags].slice(0, 4).filter(Boolean);
+            const cardTags = [m.genres[0], ...(m.tags || [])].slice(0, 4).filter(Boolean);
 
             return (
               <div 
