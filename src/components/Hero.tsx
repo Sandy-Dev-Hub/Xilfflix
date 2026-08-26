@@ -19,6 +19,7 @@ export default function Hero({ movies }: HeroProps) {
   const [direction, setDirection] = useState(1);
   const navigate = useNavigate();
   const { addToList, removeFromList, isInList } = useAppStore();
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
 
   const movie = movies[current];
   const inList = movie ? isInList(movie.id) : false;
@@ -34,12 +35,30 @@ export default function Hero({ movies }: HeroProps) {
   const next = useCallback(() => goTo((current + 1) % movies.length), [current, goTo, movies.length]);
   const prev = useCallback(() => goTo((current - 1 + movies.length) % movies.length), [current, goTo, movies.length]);
 
-  // Auto-cycle every 8 seconds
+  // Desktop Auto-cycle every 3 seconds
   useEffect(() => {
     if (movies.length === 0) return;
-    const id = setInterval(next, 8000);
+    const id = setInterval(next, 3000);
     return () => clearInterval(id);
   }, [next, movies.length]);
+
+  // Mobile Auto-scroll every 3 seconds
+  useEffect(() => {
+    if (movies.length === 0) return;
+    const id = setInterval(() => {
+      const el = mobileScrollRef.current;
+      if (!el) return;
+
+      const isEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 10;
+      if (isEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        // Scroll by roughly one card width (85vw) + gap
+        el.scrollBy({ left: el.clientWidth * 0.85 + 16, behavior: 'smooth' });
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [movies.length]);
 
   if (!movie) return null;
 
@@ -65,7 +84,10 @@ export default function Hero({ movies }: HeroProps) {
     <>
       {/* ── Mobile Swipeable Hero ── */}
       <div className="md:hidden pt-20 pb-4 bg-xf-bg w-full relative z-10">
-        <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-[7.5vw] gap-4 pb-4">
+        <div 
+          ref={mobileScrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-[7.5vw] gap-4 pb-4 scroll-smooth"
+        >
           {movies.map((m) => {
             const isAdded = isInList(m.id);
             const cardTags = [m.genres[0], ...(m.tags || [])].slice(0, 4).filter(Boolean);

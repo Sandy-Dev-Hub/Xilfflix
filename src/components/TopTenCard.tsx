@@ -9,7 +9,7 @@ interface TopTenCardProps {
 }
 
 /** Portrait card dimensions for the Top 10 row */
-const CARD_WIDTH = 190; // px — narrower than 16:9 standard cards
+// We use responsive tailwind classes on the element instead of a fixed constant now.
 
 export default function TopTenCard({ movie, rank }: TopTenCardProps) {
   const [imgError, setImgError] = useState(false);
@@ -29,7 +29,7 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
         aria-hidden="true"
         className="absolute left-0 bottom-0 select-none font-display font-black leading-none"
         style={{
-          fontSize: 'clamp(80px, 10vw, 120px)',
+          fontSize: 'clamp(60px, 12vw, 120px)',
           lineHeight: 0.82,
           color: '#1A1A1A',
           WebkitTextStroke: '2.5px #2E2E2E',
@@ -42,8 +42,7 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
 
       {/* ── Portrait card — sits above numeral, z-10 ──────────────────────── */}
       <div
-        className="relative z-10"
-        style={{ width: CARD_WIDTH }}
+        className="relative z-10 w-[130px] sm:w-[150px] md:w-[190px]"
         onClick={() => navigate(`/${movie.type}/${movie.id}`)}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/${movie.type}/${movie.id}`)}
         tabIndex={0}
@@ -52,7 +51,7 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
       >
         {/* Card image — 2:3 portrait aspect ratio */}
         <div
-          className="relative rounded-md overflow-hidden bg-xf-card shadow-lg transition-transform duration-200 group-hover/top10:scale-[1.04]"
+          className="relative rounded-xl overflow-hidden bg-xf-card shadow-lg transition-transform duration-200 group-hover/top10:scale-[1.04]"
           style={{ aspectRatio: '2/3' }}
         >
           {thumbSrc ? (

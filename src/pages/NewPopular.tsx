@@ -53,7 +53,7 @@ export default function NewPopular() {
                 <Sparkles size={18} className="text-xf-red" />
                 <h2 className="font-display font-bold text-xl text-white">New Releases</h2>
               </div>
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
                 {data.newReleases.map((m, i) => (
                   <motion.div
                     key={m.id}
@@ -62,7 +62,7 @@ export default function NewPopular() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <MovieCard movie={m} />
+                    <MovieCard movie={m} fluid />
                   </motion.div>
                 ))}
               </div>
@@ -74,7 +74,7 @@ export default function NewPopular() {
                 <Flame size={18} className="text-orange-400" />
                 <h2 className="font-display font-bold text-xl text-white">Trending This Week</h2>
               </div>
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4">
                 {data.trending.map((m, i) => (
                   <motion.div
                     key={m.id}
@@ -83,7 +83,7 @@ export default function NewPopular() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <MovieCard movie={m} />
+                    <MovieCard movie={m} fluid />
                   </motion.div>
                 ))}
               </div>
