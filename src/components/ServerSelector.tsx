@@ -73,6 +73,12 @@ export default function ServerSelector({
           );
         })}
       </div>
+      <p className="mt-4 text-xs text-xf-subtle/80 flex gap-2 items-start">
+        <span className="text-xf-red mt-0.5">*</span>
+        <span>
+          <strong>Server 2 (4K)</strong> will only play in 4K resolution if the movie is natively available in 4K. Otherwise, it streams at the highest available quality.
+        </span>
+      </p>
     </div>
   );
 }
