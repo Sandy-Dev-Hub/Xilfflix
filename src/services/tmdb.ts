@@ -261,13 +261,20 @@ export async function getTopRated(
   const cacheKey = `topRated-${type}-${page}`;
   if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
 
-  const data = await fetchTMDB(`/${type}/top_rated`, { page: String(page) });
+  // Use discover with origin country IN and sort by popularity 
+  // to get real-time trending Indian movies/shows instead of the static all-time global top 10.
+  const data = await fetchTMDB(`/discover/${type}`, {
+    with_origin_country: 'IN',
+    sort_by: 'popularity.desc',
+    page: String(page)
+  });
+
   const movies: Movie[] = data.results.slice(0, 10).map((item: any, idx: number) => ({
     ...normalizeTMDB(item, type),
     topTenRank: (page - 1) * 20 + idx + 1,
     // Exactly one badge: this IS the top-rated list, so always 'Top Rated'.
     // TopTenCard adds its own 'TOP 10' ribbon separately — it's not in badges[].
-    badges: ['Top Rated'] as string[],
+    badges: ['Top 10'] as string[],
   }));
   const result = { movies, totalPages: data.total_pages ?? 1 };
   pageCache.set(cacheKey, result);

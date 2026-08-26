@@ -22,6 +22,13 @@ const pageVariants = {
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
+const GENRE_TO_ID: Record<string, number> = {
+  Action: 28, Comedy: 35, Drama: 18, Thriller: 53, 'Sci-Fi': 878,
+  Horror: 27, Romance: 10749, Crime: 80, Mystery: 9648, Adventure: 12,
+  Fantasy: 14, Animation: 16, Family: 10751, Music: 10402, History: 36,
+  War: 10752, Western: 37, Documentary: 99,
+};
+
 // Compute 60-days-ago ISO date string once per render cycle
 function recent60DaysAgo(): string {
   const d = new Date();
@@ -62,12 +69,19 @@ export default function Home() {
   }, [data?.trending, seedDynamicNotifications]);
 
   // ── "Your Next Watch" heuristic: genres from continue-watching history ────────
-  const nextWatchGenres = useMemo(() => {
-    const ids = Object.keys(continueWatching);
-    if (ids.length === 0) return null;
-    // The most recently watched title's genres (stored in movieMeta is minimal;
-    // we just return null here if no genre data — the row will self-skip)
-    return null; // Row falls back to Drama/Thriller when no history is available
+  const nextWatchGenreIds = useMemo(() => {
+    const items = Object.values(continueWatching).sort((a, b) => b.lastWatched - a.lastWatched);
+    if (items.length === 0) return [53, 18]; // Fallback to Thriller/Drama
+
+    const mostRecent = items[0];
+    if (mostRecent.movieMeta?.genres && mostRecent.movieMeta.genres.length > 0) {
+      const ids = mostRecent.movieMeta.genres
+        .map(g => GENRE_TO_ID[g])
+        .filter(Boolean) as number[];
+      if (ids.length > 0) return ids.slice(0, 2); // Use top 1-2 genres
+    }
+    
+    return [53, 18]; // Fallback
   }, [continueWatching]);
 
   // ── "We Think You'll Love This" heuristic: genres from My List ───────────────
@@ -75,10 +89,6 @@ export default function Home() {
     if (myList.length === 0) return null;
     // Pick the most frequent genre across My List items
     const freq: Record<string, number> = {};
-    const GENRE_TO_ID: Record<string, number> = {
-      Action: 28, Comedy: 35, Drama: 18, Thriller: 53, 'Sci-Fi': 878,
-      Horror: 27, Romance: 10749, Crime: 80, Mystery: 9648, Adventure: 12,
-    };
     for (const m of myList) {
       for (const g of m.genres) {
         freq[g] = (freq[g] ?? 0) + 1;
@@ -139,9 +149,9 @@ export default function Home() {
         {/* ── 2. Continue Watching for {username} ───────────────────────────── */}
         <ContinueWatching />
 
-        {/* ── 3. Your Next Watch (heuristic — Thriller fallback) ────────────── */}
+        {/* ── 3. Your Next Watch (heuristic based on recently watched) ──────── */}
         <PresetRow
-          preset={{ title: `Your Next Watch`, mediaType: 'movie', genreIds: [53, 18] }}
+          preset={{ title: `Your Next Watch`, mediaType: 'movie', genreIds: nextWatchGenreIds }}
           makeFetchMore={makeFetchMore}
         />
 

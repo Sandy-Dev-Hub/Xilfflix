@@ -44,6 +44,7 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
         title: movie.title,
         type: movie.type,
         poster: movie.poster,
+        genres: movie.genres,
       });
     }, 30000);
     return () => clearInterval(interval);

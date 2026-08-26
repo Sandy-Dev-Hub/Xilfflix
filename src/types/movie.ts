@@ -58,5 +58,6 @@ export interface WatchProgress {
     title: string;
     type: MediaType;
     poster: string;
+    genres?: string[];
   };
 }

@@ -5,7 +5,6 @@ import {
   List,
   PlayCircle,
   Settings,
-  LogOut,
 } from 'lucide-react';
 
 interface ProfileMenuProps {
@@ -43,16 +42,6 @@ export default function ProfileMenu({ onClose, onNavigate }: ProfileMenuProps) {
           {label}
         </button>
       ))}
-      <div className="border-t border-white/10">
-        <button
-          onClick={onClose}
-          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-xf-muted hover:text-white hover:bg-white/8 transition-colors duration-150 group"
-          role="menuitem"
-        >
-          <LogOut size={16} className="text-xf-subtle group-hover:text-red-400 transition-colors" />
-          Sign Out
-        </button>
-      </div>
     </motion.div>
   );
 }
