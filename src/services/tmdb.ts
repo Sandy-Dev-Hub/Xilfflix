@@ -121,6 +121,7 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     .filter(Boolean)
     .slice(0, 3) as string[];
   const badges = deriveBadges(item);
+  const similar = item.similar?.results?.map((s: any) => normalizeTMDB(s, type)) || [];
 
   // Resolve full-size image URLs with mutual fallback so no card ever has empty thumbnails:
   // poster falls back to backdrop if missing, and vice versa.
@@ -153,6 +154,7 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     tags,
     badges,
     region: 'US',
+    similar,
   };
 }
 

@@ -263,6 +263,22 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
         )}
       </div>
 
+      {/* Similar Movies */}
+      {movie.similar && movie.similar.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-16 mb-8"
+        >
+          <MovieRow 
+            title="Similar Movies to Watch" 
+            movies={movie.similar.slice(0, 20)} 
+          />
+        </motion.div>
+      )}
+
       <Footer />
     </motion.div>
   );

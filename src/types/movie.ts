@@ -31,6 +31,7 @@ export interface Movie {
   topTenRank?: number;   // 1-10 for Top 10 rows
   region?: string;        // e.g. "US" for "Top 10 in US"
   badges?: string[];      // e.g. ["New Release", "Trending", "Top Rated"]
+  similar?: Movie[];      // Similar movies suggestions
 }
 
 export interface Notification {
