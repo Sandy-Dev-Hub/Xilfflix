@@ -10,7 +10,7 @@ import Hero from '@/components/Hero';
 import MovieRow from '@/components/MovieRow';
 import Footer from '@/components/Footer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
-import GenreDropdown, { type GenreOption } from '@/components/GenreDropdown';
+import GenreDropdown, { type GenreOption, LANGUAGE_OPTIONS } from '@/components/GenreDropdown';
 import type { Movie } from '@/types/movie';
 
 const pageVariants = {
@@ -52,11 +52,11 @@ export default function TVShows() {
   const { data: heroShows, loading: heroLoading } = useTMDB(fetchHero, [genreId, language]);
 
   const makeFetchMore = useCallback(
-    (rowGenreId: number | undefined, sort: string) => async (page: number): Promise<Movie[]> => {
-      const result = await getDiscoverTVPage(rowGenreId, page, sort, language);
+    (rowGenreId: number | undefined, rowLang: string | undefined, sort: string) => async (page: number): Promise<Movie[]> => {
+      const result = await getDiscoverTVPage(rowGenreId, page, sort, rowLang);
       return result.movies;
     },
-    [language]
+    []
   );
 
   const genreLabel = selectedGenre ? selectedGenre.label : 'All TV Shows';
@@ -70,20 +70,21 @@ export default function TVShows() {
       exit="exit"
       className="min-h-screen bg-xf-bg"
     >
-      {/* Hero with Overlay Header */}
-      <div className="relative">
-        <div className="absolute top-24 sm:top-28 left-4 sm:left-8 lg:left-12 z-20 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 pointer-events-none">
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white drop-shadow-md">TV Shows</h1>
-          <div className="pointer-events-auto flex items-center gap-3">
-            <GenreDropdown selected={selectedGenre} onSelect={setSelectedGenre} />
-            {selectedGenre && (
-              <span className="text-white/80 text-sm font-medium drop-shadow-md hidden sm:block">
-                Showing: {genreLabel}
-              </span>
-            )}
-          </div>
+      {/* Filter Header */}
+      <div className="pt-24 pb-6 px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 bg-xf-bg relative z-20">
+        <h1 className="font-display font-black text-3xl sm:text-5xl text-white drop-shadow-md">TV Shows</h1>
+        <div className="flex items-center gap-3">
+          <GenreDropdown selected={selectedGenre} onSelect={setSelectedGenre} />
+          {selectedGenre && (
+            <span className="text-white/80 text-sm font-medium drop-shadow-md hidden sm:block">
+              Showing: {genreLabel}
+            </span>
+          )}
         </div>
+      </div>
 
+      {/* Hero */}
+      <div className="relative">
         {heroLoading ? (
           <LoadingSkeleton variant="hero" />
         ) : (
@@ -101,16 +102,37 @@ export default function TVShows() {
               genreId={undefined}
               language={language}
               sort="first_air_date.desc"
-              fetchMore={makeFetchMore(undefined, "first_air_date.desc")}
+              fetchMore={makeFetchMore(undefined, language, "first_air_date.desc")}
             />
             {TV_GENRES.map(g => (
               <TVGenreRow
                 key={`${g.id}-${language}-pop`}
-                title={`${g.label} Shows`}
+                title={`${selectedGenre?.label} ${g.label} Shows`}
                 genreId={g.id}
                 language={language}
                 sort="popularity.desc"
-                fetchMore={makeFetchMore(g.id, "popularity.desc")}
+                fetchMore={makeFetchMore(g.id, language, "popularity.desc")}
+              />
+            ))}
+          </>
+        ) : genreId ? (
+          <>
+            <TVGenreRow
+              key={`upcoming-${genreId}`}
+              title={`Upcoming ${selectedGenre?.label} Shows`}
+              genreId={genreId}
+              language={undefined}
+              sort="first_air_date.desc"
+              fetchMore={makeFetchMore(genreId, undefined, "first_air_date.desc")}
+            />
+            {LANGUAGE_OPTIONS.filter(l => l.id !== 'all').map(lang => (
+              <TVGenreRow
+                key={`${genreId}-${lang.id}-pop`}
+                title={`${lang.label} ${selectedGenre?.label} Shows`}
+                genreId={genreId}
+                language={String(lang.id)}
+                sort="popularity.desc"
+                fetchMore={makeFetchMore(genreId, String(lang.id), "popularity.desc")}
               />
             ))}
           </>
@@ -123,7 +145,7 @@ export default function TVShows() {
                 genreId={genreId}
                 language={language}
                 sort={sort}
-                fetchMore={makeFetchMore(genreId, sort)}
+                fetchMore={makeFetchMore(genreId, language, sort)}
               />
             ))}
           </>

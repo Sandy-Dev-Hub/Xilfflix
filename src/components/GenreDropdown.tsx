@@ -10,17 +10,19 @@ export interface GenreOption {
   paramType: 'genre' | 'language';
 }
 
+export const LANGUAGE_OPTIONS: GenreOption[] = [
+  { id: 'en', label: 'English', paramType: 'language' },
+  { id: 'hi', label: 'Hindi', paramType: 'language' },
+  { id: 'ta', label: 'Tamil', paramType: 'language' },
+  { id: 'te', label: 'Telugu', paramType: 'language' },
+  { id: 'ml', label: 'Malayalam', paramType: 'language' },
+  { id: 'all', label: 'International', paramType: 'language' },
+];
+
 const GENRE_COLUMNS: { heading: string; options: GenreOption[] }[] = [
   {
     heading: 'By Language',
-    options: [
-      { id: 'en', label: 'English', paramType: 'language' },
-      { id: 'hi', label: 'Hindi', paramType: 'language' },
-      { id: 'ta', label: 'Tamil', paramType: 'language' },
-      { id: 'te', label: 'Telugu', paramType: 'language' },
-      { id: 'ml', label: 'Malayalam', paramType: 'language' },
-      { id: 'all', label: 'International', paramType: 'language' },
-    ],
+    options: LANGUAGE_OPTIONS,
   },
   {
     heading: 'By Theme',
