@@ -145,9 +145,9 @@ export default function MovieRow({
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className={`absolute left-1 top-1/2 -translate-y-5 z-20 w-10 h-10 rounded-full
+            className={`hidden md:flex absolute left-1 top-1/2 -translate-y-5 z-20 w-10 h-10 rounded-full
               bg-[rgba(20,20,20,0.7)] backdrop-blur-sm text-white border border-white/10
-              flex items-center justify-center transition-all duration-200
+              items-center justify-center transition-all duration-200
               hover:bg-[rgba(20,20,20,0.9)] hover:scale-110 shadow-lg
               ${showLeftArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
             aria-label="Scroll left"
@@ -204,9 +204,9 @@ export default function MovieRow({
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className={`absolute right-1 top-1/2 -translate-y-5 z-20 w-10 h-10 rounded-full
+            className={`hidden md:flex absolute right-1 top-1/2 -translate-y-5 z-20 w-10 h-10 rounded-full
               bg-[rgba(20,20,20,0.7)] backdrop-blur-sm text-white border border-white/10
-              flex items-center justify-center transition-all duration-200
+              items-center justify-center transition-all duration-200
               hover:bg-[rgba(20,20,20,0.9)] hover:scale-110 shadow-lg
               ${showRightArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
             aria-label="Scroll right"

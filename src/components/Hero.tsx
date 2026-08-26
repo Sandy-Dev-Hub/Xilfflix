@@ -65,7 +65,7 @@ export default function Hero({ movies }: HeroProps) {
     <>
       {/* ── Mobile Swipeable Hero ── */}
       <div className="md:hidden pt-20 pb-4 bg-xf-bg w-full relative z-10">
-        <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-4 gap-4 pb-4">
+        <div className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-[7.5vw] gap-4 pb-4">
           {movies.map((m) => {
             const isAdded = isInList(m.id);
             const cardTags = [m.genres[0], ...(m.tags || [])].slice(0, 4).filter(Boolean);

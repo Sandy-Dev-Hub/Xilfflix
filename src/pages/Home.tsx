@@ -128,7 +128,7 @@ export default function Home() {
   }
 
   const { trending, topRatedMovies, topRatedTV } = data;
-  const heroMovies = trending.slice(0, 5);
+  const heroMovies = trending.slice(0, 10);
 
   return (
     <motion.div
@@ -141,7 +141,7 @@ export default function Home() {
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <Hero movies={heroMovies} />
 
-      <div className="mt-[-60px] relative z-10 flex flex-col gap-10 pb-4">
+      <div className="max-md:mt-4 md:mt-[-60px] relative z-10 flex flex-col gap-10 pb-4">
 
         {/* ── 1. TV Action & Adventure (preset row) ─────────────────────────── */}
         <PresetRow preset={homeRowPresets[0]} makeFetchMore={makeFetchMore} />
