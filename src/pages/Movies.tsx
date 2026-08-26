@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Film } from 'lucide-react';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { Film, SlidersHorizontal } from 'lucide-react';
 import {
   getDiscoverMoviesPage,
   getDiscoverMovies,
@@ -66,15 +66,24 @@ export default function Movies() {
   const genreLabel = selectedGenre ? selectedGenre.label : 'All Movies';
   const visibleHero = heroMovies?.slice(0, 10) ?? [];
 
-  const pillOptions: GenreOption[] = MOVIE_GENRES.map(g => ({
-    id: g.id,
-    label: g.label,
-    paramType: 'genre',
-  }));
+  const { scrollY } = useScroll();
+  const [showHeader, setShowHeader] = useState(true);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() ?? 0;
+    if (latest > previous && latest > 150) {
+      setShowHeader(false);
+    } else {
+      setShowHeader(true);
+    }
+  });
+
+  const [mobileSort, setMobileSort] = useState('popularity.desc');
+  const sortOptions = SORT_VARIANTS.map(v => ({ id: v.sort, label: v.label }));
 
   const mobileFetchMore = useCallback(
-    (page: number) => getDiscoverMoviesPage(genreId, page, "popularity.desc", undefined).then(r => r.movies),
-    [genreId]
+    (page: number) => getDiscoverMoviesPage(genreId, page, mobileSort, language).then(r => r.movies),
+    [genreId, language, mobileSort]
   );
 
   return (
@@ -87,18 +96,35 @@ export default function Movies() {
     >
       {/* ── Mobile Layout (md:hidden) ── */}
       <div className="md:hidden">
-        {/* Mobile Header */}
-        <div className="pt-20 px-4 pb-2 bg-xf-bg sticky top-0 z-40">
-          <h1 className="font-display font-black text-3xl text-white">All Movies</h1>
-          <p className="text-xf-subtle text-sm mt-1">A broad wall of movies worth browsing.</p>
-        </div>
+        <motion.div 
+          initial={{ y: 0 }}
+          animate={{ y: showHeader ? 0 : '-100%' }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="fixed top-0 left-0 right-0 z-40 bg-xf-bg/95 backdrop-blur shadow-xl"
+        >
+          {/* Mobile Header */}
+          <div className="pt-16 px-4 pb-2">
+            <h1 className="font-display font-black text-3xl text-white">All Movies</h1>
+            <p className="text-xf-subtle text-sm mt-1">A broad wall of movies worth browsing.</p>
+          </div>
 
-        <FilterPillBar 
-          options={pillOptions}
-          selected={selectedGenre}
-          onSelect={setSelectedGenre}
-          allLabel="All Movies"
-        />
+          <FilterPillBar 
+            options={sortOptions}
+            selectedId={mobileSort}
+            onSelect={(id) => setMobileSort(id || 'popularity.desc')}
+            prepend={
+              <GenreDropdown 
+                selected={selectedGenre} 
+                onSelect={setSelectedGenre} 
+                triggerLabel="Filters"
+                triggerIcon={<SlidersHorizontal size={14} />}
+              />
+            }
+          />
+        </motion.div>
+        
+        {/* Spacer to prevent grid from hiding under the fixed header */}
+        <div className="pt-[140px]" />
 
         <MovieGrid fetchMore={mobileFetchMore} />
       </div>

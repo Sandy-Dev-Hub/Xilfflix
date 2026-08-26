@@ -160,7 +160,7 @@ export default function MovieRow({
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
-          className="flex gap-2 overflow-x-auto scrollbar-hide px-4 sm:px-8 lg:px-12 pb-4 pt-1"
+          className="flex gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-8 lg:px-12 pb-4 pt-1 scroll-smooth"
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {allMovies.map((movie, i) => (

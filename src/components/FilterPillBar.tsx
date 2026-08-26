@@ -1,37 +1,28 @@
 import type { GenreOption } from './GenreDropdown';
 
 interface FilterPillBarProps {
-  options: GenreOption[];
-  selected: GenreOption | null;
-  onSelect: (option: GenreOption | null) => void;
-  allLabel?: string;
+  options: { id: string; label: string }[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+  prepend?: React.ReactNode;
 }
 
 export default function FilterPillBar({ 
   options, 
-  selected, 
-  onSelect, 
-  allLabel = "All" 
+  selectedId, 
+  onSelect,
+  prepend
 }: FilterPillBarProps) {
   return (
-    <div className="flex overflow-x-auto hide-scrollbar gap-2 px-4 py-3 sticky top-[60px] z-30 bg-xf-bg/95 backdrop-blur border-b border-white/5">
-      <button
-        onClick={() => onSelect(null)}
-        className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 border ${
-          selected === null 
-            ? 'bg-white text-black border-white shadow-md' 
-            : 'bg-[#181818] text-white border-white/10 hover:bg-white/10'
-        }`}
-      >
-        {allLabel}
-      </button>
+    <div className="flex overflow-x-auto hide-scrollbar gap-2 px-4 py-3 bg-xf-bg/95 backdrop-blur border-b border-white/5">
+      {prepend}
       
       {options.map(opt => {
-        const isSelected = selected?.id === opt.id;
+        const isSelected = selectedId === opt.id;
         return (
            <button
             key={opt.id}
-            onClick={() => onSelect(isSelected ? null : opt)}
+            onClick={() => onSelect(isSelected ? null : opt.id)}
             className={`flex-shrink-0 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 border ${
               isSelected 
                 ? 'bg-white text-black border-white shadow-md' 

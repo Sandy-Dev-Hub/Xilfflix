@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
 
 export interface GenreOption {
@@ -52,9 +52,11 @@ const GENRE_COLUMNS: { heading: string; options: GenreOption[] }[] = [
 interface GenreDropdownProps {
   selected?: GenreOption | null;
   onSelect: (option: GenreOption | null) => void;
+  triggerLabel?: string;
+  triggerIcon?: React.ReactNode;
 }
 
-export default function GenreDropdown({ selected, onSelect }: GenreDropdownProps) {
+export default function GenreDropdown({ selected, onSelect, triggerLabel, triggerIcon }: GenreDropdownProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -72,15 +74,18 @@ export default function GenreDropdown({ selected, onSelect }: GenreDropdownProps
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200
-          ${selected
-            ? 'bg-white text-black border-white'
+          ${selected || triggerLabel
+            ? 'bg-[#181818] text-white border-white/20 hover:bg-white/10'
             : 'bg-transparent border-white/30 text-white hover:border-white/60'
           }`}
       >
-        {selected ? selected.label : 'Genres'}
-        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown size={14} />
-        </motion.span>
+        {triggerIcon}
+        {selected ? selected.label : (triggerLabel || 'Genres')}
+        {!triggerIcon && (
+          <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown size={14} />
+          </motion.span>
+        )}
       </button>
 
       {/* Dropdown panel */}
@@ -91,7 +96,7 @@ export default function GenreDropdown({ selected, onSelect }: GenreDropdownProps
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.16, ease: 'easeOut' }}
-            className="absolute top-full mt-2 left-0 z-50 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-4 min-w-[480px] max-w-[calc(100vw-32px)]"
+            className="max-md:fixed max-md:top-24 max-md:left-4 max-md:right-4 max-md:mt-0 absolute top-full mt-2 left-0 z-50 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-4 min-w-[480px] max-md:min-w-0 max-md:max-h-[70vh] max-md:overflow-y-auto"
           >
             {selected && (
               <button

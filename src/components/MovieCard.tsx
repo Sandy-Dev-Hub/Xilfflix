@@ -67,8 +67,8 @@ export default function MovieCard({ movie, size = 'md', posterMode = true }: Mov
 
   // Sizing
   const widthClass = posterMode
-    ? (size === 'sm' ? 'w-[130px]' : 'w-[160px] sm:w-[180px]')
-    : (size === 'sm' ? 'w-[220px]' : 'w-[260px] sm:w-[280px] lg:w-[300px]');
+    ? (size === 'sm' ? 'w-[120px]' : 'w-[140px] sm:w-[160px]')
+    : (size === 'sm' ? 'w-[200px]' : 'w-[240px] sm:w-[280px] lg:w-[300px]');
 
   const aspectClass = posterMode ? '' : '';
   const aspectStyle = posterMode ? { aspectRatio: '2/3' } : { aspectRatio: '16/9' };
@@ -89,7 +89,7 @@ export default function MovieCard({ movie, size = 'md', posterMode = true }: Mov
         aria-label={`${movie.title} (${movie.year})`}
       >
         <div
-          className={`relative rounded-md overflow-hidden bg-xf-card shadow-md transition-transform duration-200 group-hover/card:scale-[1.03] ${aspectClass}`}
+          className={`relative rounded-xl overflow-hidden bg-xf-card shadow-md transition-transform duration-200 group-hover/card:scale-[1.03] ${aspectClass}`}
           style={aspectStyle}
         >
           {/* Thumbnail */}
@@ -129,7 +129,10 @@ export default function MovieCard({ movie, size = 'md', posterMode = true }: Mov
 
         {/* Title shown below card in poster mode */}
         {posterMode && (
-          <p className="mt-1.5 text-white text-xs font-medium truncate px-0.5">{movie.title}</p>
+          <div className="mt-2 px-1">
+            <p className="text-white text-[13px] sm:text-sm font-medium truncate leading-snug">{movie.title}</p>
+            {movie.year && <p className="text-xf-subtle text-[11px] sm:text-xs mt-0.5">{movie.year}</p>}
+          </div>
         )}
       </div>
 
