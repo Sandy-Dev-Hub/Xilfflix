@@ -9,9 +9,11 @@ interface MovieCardProps {
   size?: 'sm' | 'md';
   /** When true, renders a compact poster (2:3) — used in search results */
   posterMode?: boolean;
+  /** When true, the card takes full width of its container */
+  fluid?: boolean;
 }
 
-export default function MovieCard({ movie, size = 'md', posterMode = true }: MovieCardProps) {
+export default function MovieCard({ movie, size = 'md', posterMode = true, fluid = false }: MovieCardProps) {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [cardRect, setCardRect] = useState<DOMRect | null>(null);
@@ -66,9 +68,11 @@ export default function MovieCard({ movie, size = 'md', posterMode = true }: Mov
     : '';
 
   // Sizing
-  const widthClass = posterMode
-    ? (size === 'sm' ? 'w-[120px]' : 'w-[140px] sm:w-[160px]')
-    : (size === 'sm' ? 'w-[200px]' : 'w-[240px] sm:w-[280px] lg:w-[300px]');
+  const widthClass = fluid 
+    ? 'w-full'
+    : posterMode
+      ? (size === 'sm' ? 'w-[120px]' : 'w-[140px] sm:w-[160px]')
+      : (size === 'sm' ? 'w-[200px]' : 'w-[240px] sm:w-[280px] lg:w-[300px]');
 
   const aspectClass = posterMode ? '' : '';
   const aspectStyle = posterMode ? { aspectRatio: '2/3' } : { aspectRatio: '16/9' };

@@ -136,7 +136,7 @@ export default function MovieRow({
       >
         {/* Left fade */}
         <div
-          className={`absolute left-0 top-0 bottom-4 w-16 z-10 pointer-events-none
+          className={`hidden md:block absolute left-0 top-0 bottom-4 w-16 z-10 pointer-events-none
             bg-gradient-to-r from-xf-bg to-transparent transition-opacity duration-200
             ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`}
         />
@@ -195,7 +195,7 @@ export default function MovieRow({
 
         {/* Right fade */}
         <div
-          className={`absolute right-0 top-0 bottom-4 w-16 z-10 pointer-events-none
+          className={`hidden md:block absolute right-0 top-0 bottom-4 w-16 z-10 pointer-events-none
             bg-gradient-to-l from-xf-bg to-transparent transition-opacity duration-200
             ${canScrollRight ? 'opacity-100' : 'opacity-0'}`}
         />

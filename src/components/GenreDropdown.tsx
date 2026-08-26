@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { useOutsideClick } from '@/hooks/useOutsideClick';
@@ -91,48 +92,112 @@ export default function GenreDropdown({ selected, onSelect, triggerLabel, trigge
       {/* Dropdown panel */}
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-            transition={{ duration: 0.16, ease: 'easeOut' }}
-            className="max-md:fixed max-md:top-24 max-md:left-4 max-md:right-4 max-md:mt-0 absolute top-full mt-2 left-0 z-50 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-4 min-w-[480px] max-md:min-w-0 max-md:max-h-[70vh] max-md:overflow-y-auto"
-          >
-            {selected && (
-              <button
-                onClick={() => { onSelect(null); setOpen(false); }}
-                className="text-xf-red text-xs hover:underline mb-3 block"
+          <>
+            {/* Desktop Panel */}
+            <div className="hidden md:block">
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                transition={{ duration: 0.16, ease: 'easeOut' }}
+                className="absolute top-full mt-2 left-0 z-50 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl shadow-black/60 p-4 min-w-[480px] max-w-[calc(100vw-32px)]"
               >
-                ✕ Clear filter: {selected.label}
-              </button>
-            )}
+                {selected && (
+                  <button
+                    onClick={() => { onSelect(null); setOpen(false); }}
+                    className="text-xf-red text-xs hover:underline mb-3 block"
+                  >
+                    ✕ Clear filter: {selected.label}
+                  </button>
+                )}
 
-            <div className="grid grid-cols-3 gap-6">
-              {GENRE_COLUMNS.map((col) => (
-                <div key={col.heading}>
-                  <p className="text-xf-subtle text-[11px] font-semibold uppercase tracking-wider mb-2">
-                    {col.heading}
-                  </p>
-                  <ul className="space-y-0.5">
-                    {col.options.map((opt) => (
-                      <li key={String(opt.id)}>
-                        <button
-                          onClick={() => handleSelect(opt)}
-                          className={`w-full text-left px-2 py-1.5 rounded text-sm transition-colors duration-150
-                            ${selected?.id === opt.id
-                              ? 'text-white bg-white/10 font-medium'
-                              : 'text-xf-muted hover:text-white hover:bg-white/5'
-                            }`}
-                        >
-                          {opt.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="grid grid-cols-3 gap-6">
+                  {GENRE_COLUMNS.map((col) => (
+                    <div key={col.heading}>
+                      <p className="text-xf-subtle text-[11px] font-semibold uppercase tracking-wider mb-2">
+                        {col.heading}
+                      </p>
+                      <ul className="space-y-0.5">
+                        {col.options.map((opt) => (
+                          <li key={String(opt.id)}>
+                            <button
+                              onClick={() => handleSelect(opt)}
+                              className={`w-full text-left px-2 py-1.5 rounded text-sm transition-colors duration-150
+                                ${selected?.id === opt.id
+                                  ? 'text-white bg-white/10 font-medium'
+                                  : 'text-xf-muted hover:text-white hover:bg-white/5'
+                                }`}
+                            >
+                              {opt.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </motion.div>
             </div>
-          </motion.div>
+
+            {/* Mobile Panel via Portal */}
+            {typeof document !== 'undefined' && createPortal(
+              <div className="md:hidden relative z-[999999]">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999998]"
+                  onClick={() => setOpen(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: '100%' }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="fixed left-0 right-0 bottom-0 z-[999999] bg-[#1A1A1A] border-t border-white/10 rounded-t-2xl shadow-2xl p-5 max-h-[85vh] overflow-y-auto"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-white font-bold text-lg">Filters</h3>
+                    {selected && (
+                      <button
+                        onClick={() => { onSelect(null); setOpen(false); }}
+                        className="text-xf-red text-sm font-medium"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-6">
+                    {GENRE_COLUMNS.map((col) => (
+                      <div key={col.heading}>
+                        <p className="text-xf-subtle text-[11px] font-semibold uppercase tracking-wider mb-2">
+                          {col.heading}
+                        </p>
+                        <ul className="flex flex-wrap gap-2">
+                          {col.options.map((opt) => (
+                            <li key={String(opt.id)}>
+                              <button
+                                onClick={() => handleSelect(opt)}
+                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-150 border
+                                  ${selected?.id === opt.id
+                                    ? 'bg-white text-black border-white'
+                                    : 'bg-transparent text-white border-white/20 hover:bg-white/10'
+                                  }`}
+                              >
+                                {opt.label}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>,
+              document.body
+            )}
+          </>
         )}
       </AnimatePresence>
     </div>

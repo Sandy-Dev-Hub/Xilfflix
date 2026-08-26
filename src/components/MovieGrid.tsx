@@ -76,7 +76,7 @@ export default function MovieGrid({ title, fetchMore }: MovieGridProps) {
       
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
         {movies.map(movie => (
-          <MovieCard key={movie.id} movie={movie} />
+          <MovieCard key={movie.id} movie={movie} fluid />
         ))}
       </div>
       

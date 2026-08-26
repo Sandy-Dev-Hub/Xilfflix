@@ -98,14 +98,8 @@ export default function TVShows() {
           initial={{ y: 0 }}
           animate={{ y: showHeader ? 0 : '-100%' }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="fixed top-0 left-0 right-0 z-40 bg-xf-bg/95 backdrop-blur shadow-xl"
+          className="fixed top-0 left-0 right-0 z-40 bg-xf-bg/95 backdrop-blur shadow-xl pt-16"
         >
-          {/* Mobile Header */}
-          <div className="pt-16 px-4 pb-2">
-            <h1 className="font-display font-black text-3xl text-white">All Shows</h1>
-            <p className="text-xf-subtle text-sm mt-1">A broad wall of shows worth browsing.</p>
-          </div>
-
           <FilterPillBar 
             options={sortOptions}
             selectedId={mobileSort}
@@ -122,7 +116,7 @@ export default function TVShows() {
         </motion.div>
         
         {/* Spacer to prevent grid from hiding under the fixed header */}
-        <div className="pt-[140px]" />
+        <div className="pt-[100px]" />
 
         <MovieGrid fetchMore={mobileFetchMore} />
       </div>
