@@ -31,8 +31,8 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
         style={{
           fontSize: 'clamp(60px, 12vw, 120px)',
           lineHeight: 0.82,
-          color: '#1A1A1A',
-          WebkitTextStroke: '2.5px #2E2E2E',
+          color: '#141414',
+          WebkitTextStroke: '1.5px #606060',
           zIndex: 0,
           userSelect: 'none',
         }}

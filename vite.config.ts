@@ -34,7 +34,8 @@ function tmdbLocalProxy(env: Record<string, string>) {
             /^\/(movie|tv)\/\d+\/similar$/,
             /^\/genre\/(movie|tv)\/list$/,
             /^\/movie\/\d+\/release_dates$/,
-            /^\/tv\/\d+\/content_ratings$/
+            /^\/tv\/\d+\/content_ratings$/,
+            /^\/(movie|tv)\/\d+\/images$/
           ];
 
           if (!ALLOWED_PATHS.some(rx => rx.test(tmdbPath))) {

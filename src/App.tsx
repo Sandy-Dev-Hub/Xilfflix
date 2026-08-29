@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import SearchOverlay from '@/components/SearchOverlay';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import NotFound from '@/components/NotFound';
+import FloatingNav from '@/components/ui/floating-nav';
 
 // Lazy-loaded pages
 const Home = lazy(() => import('@/pages/Home'));
@@ -41,10 +42,15 @@ function ScrollToTop() {
 export default function App() {
   const location = useLocation();
 
+  // Hide navbars on Watch and Details pages
+  const hideNavs = location.pathname.startsWith('/watch') || 
+                   location.pathname.startsWith('/movie/') || 
+                   location.pathname.startsWith('/tv/');
+
   return (
     <div className="min-h-screen bg-xf-bg text-xf-text">
       <ScrollToTop />
-      <Navbar />
+      {!hideNavs && <Navbar />}
       <SearchOverlay />
 
       <AnimatePresence mode="wait">
@@ -65,6 +71,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </AnimatePresence>
+      {!hideNavs && <FloatingNav />}
     </div>
   );
 }

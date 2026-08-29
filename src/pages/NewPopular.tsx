@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { Flame, Sparkles } from 'lucide-react';
+import { Flame, Sparkles, ChevronRight } from 'lucide-react';
 import { getNewReleases, getTrending } from '@/services/tmdb';
 import { useTMDB } from '@/hooks/useTMDB';
 import MovieCard from '@/components/MovieCard';
@@ -22,6 +24,11 @@ async function fetchNewPopular() {
 
 export default function NewPopular() {
   const { data, loading, error } = useTMDB(fetchNewPopular);
+  const [addonRoot, setAddonRoot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setAddonRoot(document.getElementById('navbar-addon'));
+  }, []);
 
   return (
     <motion.div
@@ -31,12 +38,15 @@ export default function NewPopular() {
       exit="exit"
       className="min-h-screen bg-xf-bg"
     >
-      <div className="pt-24 pb-6 px-4 sm:px-8 lg:px-12 border-b border-white/8">
-        <h1 className="font-display font-black text-3xl text-white mb-1">New & Popular</h1>
-        <p className="text-xf-muted text-sm">What everyone's watching right now</p>
-      </div>
+      {addonRoot && createPortal(
+        <div className="flex items-center gap-2 ml-4">
+          <ChevronRight size={18} className="text-white/50" />
+          <span className="font-display font-bold text-xl text-white">New & Popular</span>
+        </div>,
+        addonRoot
+      )}
 
-      <div className="flex flex-col gap-12 py-8 pb-16 min-h-[50vh]">
+      <div className="flex flex-col gap-12 py-8 pb-16 min-h-[50vh] pt-24">
         {error ? (
           <div className="px-4 sm:px-8 lg:px-12">
             <p className="text-xf-red">Failed to load content.</p>

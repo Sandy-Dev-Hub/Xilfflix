@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { Tv, SlidersHorizontal } from 'lucide-react';
+import { Tv, SlidersHorizontal, ChevronRight } from 'lucide-react';
 import {
   getDiscoverTVPage,
   getDiscoverTV,
@@ -38,6 +39,11 @@ const TV_GENRES = [
 
 export default function TVShows() {
   const [selectedGenre, setSelectedGenre] = useState<GenreOption | null>(null);
+  const [addonRoot, setAddonRoot] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    setAddonRoot(document.getElementById('navbar-addon'));
+  }, []);
 
   const genreId = selectedGenre?.paramType === 'genre'
     ? (typeof selectedGenre.id === 'number' ? selectedGenre.id : undefined)
@@ -92,6 +98,15 @@ export default function TVShows() {
       exit="exit"
       className="min-h-screen bg-xf-bg"
     >
+      {addonRoot && createPortal(
+        <div className="flex items-center gap-2 ml-4">
+          <ChevronRight size={18} className="text-white/50" />
+          <span className="font-display font-bold text-xl text-white">TV Shows</span>
+          <GenreDropdown selected={selectedGenre} onSelect={setSelectedGenre} />
+        </div>,
+        addonRoot
+      )}
+
       {/* ── Mobile Layout (md:hidden) ── */}
       <div className="md:hidden">
         <motion.div 
@@ -123,19 +138,6 @@ export default function TVShows() {
 
       {/* ── Desktop Layout (hidden md:block) ── */}
       <div className="hidden md:block">
-        {/* Filter Header */}
-        <div className="pt-24 pb-6 px-4 sm:px-8 lg:px-12 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8 bg-xf-bg relative z-20">
-          <h1 className="font-display font-black text-3xl sm:text-5xl text-white drop-shadow-md">TV Shows</h1>
-          <div className="flex items-center gap-3">
-            <GenreDropdown selected={selectedGenre} onSelect={setSelectedGenre} />
-            {selectedGenre && (
-              <span className="text-white/80 text-sm font-medium drop-shadow-md hidden sm:block">
-                Showing: {genreLabel}
-              </span>
-            )}
-          </div>
-        </div>
-
         {/* Hero */}
         <div className="relative">
           {heroLoading ? (

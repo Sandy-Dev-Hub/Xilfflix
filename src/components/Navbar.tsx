@@ -65,7 +65,7 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-[70px]">
+        <div className="flex items-center justify-between h-14 lg:h-16">
           {/* Logo */}
           <Link
             to="/"
@@ -77,39 +77,11 @@ export default function Navbar() {
               <span className="text-white">ILFFLIX</span>
             </span>
           </Link>
+          
+          <div id="navbar-addon" className="hidden md:flex items-center" />
 
-          {/* Desktop nav links with sliding pill capsule */}
+          {/* Desktop nav links removed (using floating nav instead) */}
           <nav className="hidden lg:flex items-center gap-0.5 ml-8" aria-label="Primary navigation">
-            {NAV_LINKS.map(({ label, to }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === '/'}
-                aria-current={undefined} // set dynamically below
-              >
-                {({ isActive }) => (
-                  <span
-                    className="relative inline-flex items-center px-4 py-1.5 text-sm font-medium cursor-pointer select-none"
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    {isActive && (
-                      <motion.span
-                        layoutId="nav-pill"
-                        className="absolute inset-0 rounded-full bg-[#2E2E2E]"
-                        transition={{ type: 'spring', bounce: 0.18, duration: 0.38 }}
-                      />
-                    )}
-                    <span
-                      className={`relative z-10 transition-colors duration-150 ${
-                        isActive ? 'text-white' : 'text-xf-muted hover:text-white'
-                      }`}
-                    >
-                      {label}
-                    </span>
-                  </span>
-                )}
-              </NavLink>
-            ))}
           </nav>
 
           {/* Right section */}

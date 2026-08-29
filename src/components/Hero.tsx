@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Plus, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Movie } from '@/types/movie';
 import { useAppStore } from '@/store/useAppStore';
+import { getMovieLogo } from '@/services/tmdb';
 import Badge from './Badge';
 
 interface HeroProps {
@@ -20,9 +21,20 @@ export default function Hero({ movies }: HeroProps) {
   const navigate = useNavigate();
   const { addToList, removeFromList, isInList } = useAppStore();
   const mobileScrollRef = useRef<HTMLDivElement>(null);
+  const [logos, setLogos] = useState<Record<string, string>>({});
 
   const movie = movies[current];
   const inList = movie ? isInList(movie.id) : false;
+
+  useEffect(() => {
+    if (movie && !logos[movie.id]) {
+      getMovieLogo(movie.id, movie.type).then((url) => {
+        if (url) {
+          setLogos((prev) => ({ ...prev, [movie.id]: url }));
+        }
+      });
+    }
+  }, [movie, logos]);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -116,10 +128,7 @@ export default function Hero({ movies }: HeroProps) {
 
                 {/* Content Overlay */}
                 <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col items-center">
-                  {/* Title */}
-                  <h2 className="font-display font-black text-3xl sm:text-4xl text-center text-white leading-tight mb-2 tracking-tight drop-shadow-lg">
-                    {m.title}
-                  </h2>
+                  {/* The title/logo overlay is removed on mobile because the poster image already inherently contains the movie title. This prevents the title from showing twice. */}
 
                   {/* Tags */}
                   <div className="flex items-center gap-1.5 mb-5 text-xs text-white/90 font-medium drop-shadow-md">
@@ -164,7 +173,7 @@ export default function Hero({ movies }: HeroProps) {
       </div>
 
       {/* ── Desktop Hero ── */}
-      <div className="hidden md:block relative w-full h-[75vh] min-h-[520px] max-h-[900px] overflow-hidden bg-xf-bg">
+      <div className="hidden md:block relative w-full h-screen overflow-hidden bg-xf-bg">
         {/* Backdrop images with Ken-Burns */}
         <AnimatePresence initial={false} custom={direction} mode="sync">
           <motion.div
@@ -218,10 +227,18 @@ export default function Hero({ movies }: HeroProps) {
                   )}
                 </div>
 
-                {/* Title */}
-                <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-none mb-4 tracking-tight">
-                  {movie.title}
-                </h1>
+                {/* Title or Logo */}
+                {logos[movie.id] ? (
+                  <img
+                    src={logos[movie.id]}
+                    alt={movie.title}
+                    className="max-h-[140px] w-auto object-contain mb-6 drop-shadow-2xl filter"
+                  />
+                ) : (
+                  <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-none mb-4 tracking-tight">
+                    {movie.title}
+                  </h1>
+                )}
 
                 {/* Dot-separated metadata */}
                 <div className="flex items-center gap-2 mb-4 text-sm text-xf-muted flex-wrap">
