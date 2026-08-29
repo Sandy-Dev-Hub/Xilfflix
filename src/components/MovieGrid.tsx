@@ -14,6 +14,14 @@ export default function MovieGrid({ title, fetchMore }: MovieGridProps) {
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Initial load when fetchMore changes
   useEffect(() => {
     let active = true;
@@ -76,7 +84,7 @@ export default function MovieGrid({ title, fetchMore }: MovieGridProps) {
       
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
         {movies.map(movie => (
-          <MovieCard key={movie.id} movie={movie} fluid />
+          <MovieCard key={movie.id} movie={movie} posterMode={isMobile} fluid />
         ))}
       </div>
       

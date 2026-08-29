@@ -22,19 +22,24 @@ export default function Hero({ movies }: HeroProps) {
   const { addToList, removeFromList, isInList } = useAppStore();
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const [logos, setLogos] = useState<Record<string, string>>({});
+  const logosFetched = useRef(false);
 
   const movie = movies[current];
   const inList = movie ? isInList(movie.id) : false;
 
   useEffect(() => {
-    if (movie && !logos[movie.id]) {
-      getMovieLogo(movie.id, movie.type).then((url) => {
-        if (url) {
-          setLogos((prev) => ({ ...prev, [movie.id]: url }));
-        }
+    if (movies.length > 0 && !logosFetched.current) {
+      logosFetched.current = true;
+      // Fetch logos for all hero movies up-front so they are ready for the mobile swipe slider
+      movies.forEach(m => {
+        getMovieLogo(m.id, m.type).then((url) => {
+          if (url) {
+            setLogos((prev) => ({ ...prev, [m.id]: url }));
+          }
+        });
       });
     }
-  }, [movie, logos]);
+  }, [movies]);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -128,7 +133,18 @@ export default function Hero({ movies }: HeroProps) {
 
                 {/* Content Overlay */}
                 <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col items-center">
-                  {/* The title/logo overlay is removed on mobile because the poster image already inherently contains the movie title. This prevents the title from showing twice. */}
+                  {/* Title or Logo */}
+                  {logos[m.id] ? (
+                    <img
+                      src={logos[m.id]}
+                      alt={m.title}
+                      className="max-h-[80px] max-w-[90%] w-auto object-contain mb-3 drop-shadow-2xl filter"
+                    />
+                  ) : (
+                    <h1 className="font-display font-black text-2xl text-white text-center leading-none mb-3 tracking-tight drop-shadow-lg">
+                      {m.title}
+                    </h1>
+                  )}
 
                   {/* Tags */}
                   <div className="flex items-center gap-1.5 mb-5 text-xs text-white/90 font-medium drop-shadow-md">
