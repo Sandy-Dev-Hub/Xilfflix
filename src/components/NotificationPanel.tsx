@@ -22,6 +22,10 @@ function formatTimestamp(ts: number): string {
 export default function NotificationPanel({ onClose }: NotificationPanelProps) {
   const { notifications, markRead, markAllRead } = useAppStore();
 
+  const recentNotifications = notifications.filter(
+    (notif) => Date.now() - notif.timestamp <= 86400000
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8, scale: 0.97 }}
@@ -52,12 +56,12 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
 
       {/* Notification list */}
       <div className="overflow-y-auto" style={{ maxHeight: 480 }}>
-        {notifications.length === 0 ? (
+        {recentNotifications.length === 0 ? (
           <div className="py-12 flex flex-col items-center gap-2">
             <p className="text-xf-muted text-sm">No notifications yet</p>
           </div>
         ) : (
-          notifications.map((notif) => (
+          recentNotifications.map((notif) => (
             <button
               key={notif.id}
               onClick={() => markRead(notif.id)}

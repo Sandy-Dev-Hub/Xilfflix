@@ -15,6 +15,7 @@ const MovieDetails = lazy(() => import('@/pages/MovieDetails'));
 const Watch = lazy(() => import('@/pages/Watch'));
 const MyList = lazy(() => import('@/pages/MyList'));
 const Profile = lazy(() => import('@/pages/Profile'));
+const Legal = lazy(() => import('@/pages/Legal'));
 
 function PageFallback() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/watch/tv/:id" element={<Watch type="tv" />} />
             <Route path="/my-list" element={<MyList />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/legal" element={<Legal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
