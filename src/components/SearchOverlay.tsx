@@ -139,10 +139,10 @@ export default function SearchOverlay() {
           {!loading && !error && results && results.length > 0 && (
             <div className="flex flex-col gap-4">
               <h3 className="text-white font-semibold mb-2">Top Results</h3>
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {results.map((movie) => (
                   <div key={movie.id} onClick={(e) => { e.preventDefault(); handleCardClick(movie.type, movie.id); }}>
-                    <MovieCard movie={movie} size="sm" />
+                    <MovieCard movie={movie} fluid />
                   </div>
                 ))}
               </div>
