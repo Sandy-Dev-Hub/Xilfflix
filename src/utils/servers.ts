@@ -23,7 +23,7 @@ export function makeServers(
   if (mediaType === 'movie') {
     let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server2Url = `https://vidsrc.sbs/embed/movie/${tmdbId}`;
-    let server3Url = `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`;
+    let server3Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
     let server2Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies
@@ -68,7 +68,7 @@ export function makeServers(
     {
       name: 'Server 3',
       status: 'online',
-      sourceUrl: `https://v1.vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}/`,
+      sourceUrl: `https://vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}/`,
     },
   ];
 }
