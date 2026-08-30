@@ -16,12 +16,14 @@ export function makeServers(
     return [
       { name: 'Server 1 (HD)', status: 'online', sourceUrl: '' },
       { name: 'Server 2 (4K)', status: 'online', sourceUrl: '' },
+      { name: 'Server 3', status: 'online', sourceUrl: '' },
     ];
   }
 
   if (mediaType === 'movie') {
     let server1Url = `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`;
     let server2Url = `https://vidsrc.sbs/embed/movie/${tmdbId}`;
+    let server3Url = `https://vidsrc.wiki/embed/movie/${tmdbId}`;
     let server2Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies
@@ -43,6 +45,11 @@ export function makeServers(
         status: server2Status,
         sourceUrl: server2Url,
       },
+      {
+        name: 'Server 3',
+        status: 'online',
+        sourceUrl: server3Url,
+      },
     ];
   }
 
@@ -57,6 +64,11 @@ export function makeServers(
       name: 'Server 2 (4K)',
       status: 'online',
       sourceUrl: `https://vidsrc.sbs/embed/tv/${tmdbId}/${season}/${episode}`,
+    },
+    {
+      name: 'Server 3',
+      status: 'online',
+      sourceUrl: `https://vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}`,
     },
   ];
 }

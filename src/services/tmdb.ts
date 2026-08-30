@@ -261,10 +261,9 @@ export async function getTopRated(
   const cacheKey = `topRated-${type}-${page}`;
   if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
 
-  // Use discover with origin country IN and sort by popularity 
-  // to get real-time trending Indian movies/shows instead of the static all-time global top 10.
+  // Use discover with sort by popularity to get real-time trending global movies/shows
+  // instead of the static all-time global top 10.
   const data = await fetchTMDB(`/discover/${type}`, {
-    with_origin_country: 'IN',
     sort_by: 'popularity.desc',
     page: String(page)
   });

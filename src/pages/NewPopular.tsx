@@ -25,9 +25,15 @@ async function fetchNewPopular() {
 export default function NewPopular() {
   const { data, loading, error } = useTMDB(fetchNewPopular);
   const [addonRoot, setAddonRoot] = useState<HTMLElement | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setAddonRoot(document.getElementById('navbar-addon'));
+    const mql = window.matchMedia('(max-width: 639px)');
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', handler);
+    return () => mql.removeEventListener('change', handler);
   }, []);
 
   return (
@@ -72,7 +78,7 @@ export default function NewPopular() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <MovieCard movie={m} fluid />
+                    <MovieCard movie={m} fluid posterMode={isMobile} />
                   </motion.div>
                 ))}
               </div>
@@ -93,7 +99,7 @@ export default function NewPopular() {
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.05 }}
                   >
-                    <MovieCard movie={m} fluid />
+                    <MovieCard movie={m} fluid posterMode={isMobile} />
                   </motion.div>
                 ))}
               </div>

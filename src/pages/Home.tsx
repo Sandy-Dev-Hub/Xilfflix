@@ -155,9 +155,9 @@ export default function Home() {
           makeFetchMore={makeFetchMore}
         />
 
-        {/* ── 4. Top 10 Movies in India ─────────────────────────────────────── */}
+        {/* ── 4. Top 10 Movies Globally ─────────────────────────────────────── */}
         <MovieRow
-          title="Top 10 Movies in India"
+          title="Top 10 Movies Globally"
           movies={topRatedMovies}
           variant="topTen"
         />
@@ -186,9 +186,9 @@ export default function Home() {
           <PresetRow key={preset.title} preset={preset} makeFetchMore={makeFetchMore} />
         ))}
 
-        {/* ── Top 10 Shows in India ─────────────────────────────────────────── */}
+        {/* ── Top 10 Shows Globally ─────────────────────────────────────────── */}
         <MovieRow
-          title="Top 10 Shows in India"
+          title="Top 10 Shows Globally"
           movies={topRatedTV}
           variant="topTen"
         />
