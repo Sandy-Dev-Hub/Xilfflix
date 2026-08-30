@@ -14,29 +14,29 @@ export function makeServers(
   if (!tmdbId) {
     // Fallback while ID is not yet known (e.g. before TMDB fetch completes)
     return [
-      { name: 'Server 1 (HD)', status: 'online', sourceUrl: '' },
+      { name: 'Server 1 (Multi-Lang)', status: 'online', sourceUrl: '' },
       { name: 'Server 2 (4K)', status: 'online', sourceUrl: '' },
       { name: 'Server 3', status: 'online', sourceUrl: '' },
     ];
   }
 
   if (mediaType === 'movie') {
-    let server1Url = `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`;
+    let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server2Url = `https://vidsrc.sbs/embed/movie/${tmdbId}`;
-    let server3Url = `https://vidsrc.wiki/embed/movie/${tmdbId}`;
+    let server3Url = `https://v1.vidsrc.wiki/embed/movie/${tmdbId}/`;
     let server2Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies
     if (tmdbId === '37941') {
-      server1Url = `https://vidsrc.wiki/embed/movie/37941`;
+      server3Url = `https://vidsrc.wiki/embed/movie/37941`;
       server2Status = 'offline'; // vidsrc.sbs plays wrong film for this ID
     } else if (tmdbId === '329135') {
-      server1Url = `https://vidsrc.wiki/embed/movie/329135`;
+      server3Url = `https://vidsrc.wiki/embed/movie/329135`;
     }
 
     return [
       {
-        name: 'Server 1 (HD)',
+        name: 'Server 1 (Multi-Lang)',
         status: 'online',
         sourceUrl: server1Url,
       },
@@ -56,9 +56,9 @@ export function makeServers(
   // TV Series
   return [
     {
-      name: 'Server 1 (HD)',
+      name: 'Server 1 (Multi-Lang)',
       status: 'online',
-      sourceUrl: `https://v1.vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}/`,
+      sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
       name: 'Server 2 (4K)',
@@ -68,7 +68,7 @@ export function makeServers(
     {
       name: 'Server 3',
       status: 'online',
-      sourceUrl: `https://vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}`,
+      sourceUrl: `https://v1.vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}/`,
     },
   ];
 }
