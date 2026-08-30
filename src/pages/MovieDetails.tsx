@@ -72,7 +72,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
       className="min-h-screen bg-xf-bg"
     >
       {/* Backdrop */}
-      <div className="relative w-full h-[55vh] min-h-[360px] overflow-hidden">
+      <div className="relative w-full h-[40vh] min-h-[250px] sm:h-[55vh] sm:min-h-[360px] overflow-hidden">
         {movie.backdrop && (
           <img
             src={movie.backdrop}
@@ -87,7 +87,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
         {/* Back button */}
         <button
           onClick={() => navigate('/')}
-          className="absolute top-20 left-4 sm:left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg text-sm"
+          className="absolute top-6 sm:top-8 left-4 sm:left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg text-sm"
         >
           <ArrowLeft size={16} />
           Back
@@ -95,7 +95,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
       </div>
 
       {/* Main info */}
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 -mt-32 relative z-10">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-8 -mt-24 sm:-mt-32 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Poster */}
           <motion.div

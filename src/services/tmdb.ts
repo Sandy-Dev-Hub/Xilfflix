@@ -110,7 +110,7 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
   const yearStr = item.release_date || item.first_air_date || '';
   const year = yearStr ? parseInt(yearStr.split('-')[0]) : 0;
 
-  const cast = item.credits?.cast?.slice(0, 5).map((c: any) => ({
+  const cast = item.credits?.cast?.slice(0, 10).map((c: any) => ({
     name: c.name,
     profilePic: c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : null,
   })) || [];
