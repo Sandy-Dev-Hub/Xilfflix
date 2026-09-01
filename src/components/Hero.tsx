@@ -27,6 +27,33 @@ export default function Hero({ movies }: HeroProps) {
   const movie = movies[current];
   const inList = movie ? isInList(movie.id) : false;
 
+  const [mobileMovies, setMobileMovies] = useState<(Movie & { uniqueId: string })[]>([]);
+
+  useEffect(() => {
+    if (movies.length > 0) {
+      setMobileMovies([
+        ...movies.map(m => ({ ...m, uniqueId: `${m.id}-0` })),
+        ...movies.map(m => ({ ...m, uniqueId: `${m.id}-1` }))
+      ]);
+    }
+  }, [movies]);
+
+  const handleMobileScroll = useCallback(() => {
+    const el = mobileScrollRef.current;
+    if (!el || movies.length === 0) return;
+
+    if (el.scrollLeft >= el.scrollWidth - el.clientWidth * 2.5) {
+      setMobileMovies(prev => {
+        const batchId = Math.floor(prev.length / movies.length);
+        if (batchId > 100) return prev; // Limit to 100 batches
+        return [
+          ...prev,
+          ...movies.map(m => ({ ...m, uniqueId: `${m.id}-${batchId}` }))
+        ];
+      });
+    }
+  }, [movies]);
+
   useEffect(() => {
     if (movies.length > 0 && !logosFetched.current) {
       logosFetched.current = true;
@@ -61,21 +88,18 @@ export default function Hero({ movies }: HeroProps) {
 
   // Mobile Auto-scroll every 3 seconds
   useEffect(() => {
-    if (movies.length === 0) return;
+    if (mobileMovies.length === 0) return;
     const id = setInterval(() => {
       const el = mobileScrollRef.current;
       if (!el) return;
 
-      const isEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 10;
-      if (isEnd) {
-        el.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        // Scroll by roughly one card width (85vw) + gap
-        el.scrollBy({ left: el.clientWidth * 0.85 + 16, behavior: 'smooth' });
-      }
+      // Scroll by roughly one card width (85vw) + gap
+      // The onScroll handler (handleMobileScroll) will dynamically append more items as we approach the end,
+      // creating a seamless infinite scroll without ever needing to rewind to 0.
+      el.scrollBy({ left: el.clientWidth * 0.85 + 16, behavior: 'smooth' });
     }, 3000);
     return () => clearInterval(id);
-  }, [movies.length]);
+  }, [mobileMovies.length]);
 
   if (!movie) return null;
 
@@ -103,15 +127,16 @@ export default function Hero({ movies }: HeroProps) {
       <div className="md:hidden pt-20 pb-4 bg-xf-bg w-full relative z-10">
         <div 
           ref={mobileScrollRef}
+          onScroll={handleMobileScroll}
           className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar px-[7.5vw] gap-4 pb-4 scroll-smooth"
         >
-          {movies.map((m) => {
+          {mobileMovies.map((m) => {
             const isAdded = isInList(m.id);
             const cardTags = [m.genres[0], ...(m.tags || [])].slice(0, 4).filter(Boolean);
 
             return (
               <div 
-                key={m.id}
+                key={m.uniqueId}
                 className="snap-center relative w-[85vw] flex-shrink-0 min-h-[450px] h-[65vh] max-h-[600px] rounded-xl overflow-hidden border border-white/10 bg-[#181818] shadow-2xl cursor-pointer"
                 onClick={() => navigate(`/${m.type}/${m.id}`)}
               >
