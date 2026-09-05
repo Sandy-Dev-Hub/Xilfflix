@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { Analytics } from '@vercel/analytics/react';
 import Navbar from '@/components/Navbar';
 import SearchOverlay from '@/components/SearchOverlay';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -72,6 +73,7 @@ export default function App() {
         </Suspense>
       </AnimatePresence>
       {!hideNavs && <FloatingNav />}
+      <Analytics />
     </div>
   );
 }
