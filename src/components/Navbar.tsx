@@ -3,15 +3,17 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Bell, Menu, X, ChevronDown } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuthStore } from '@/store/useAuthStore';
 import ProfileMenu from './ProfileMenu';
 import NotificationPanel from './NotificationPanel';
+import AuthModal from './AuthModal';
 
 const NAV_LINKS = [
   { label: 'Home', to: '/' },
   { label: 'Movies', to: '/movies' },
   { label: 'TV Shows', to: '/tv-shows' },
-  { label: 'New & Popular', to: '/new-popular' },
   { label: 'My List', to: '/my-list' },
+  { label: 'Movie Party', to: '/movie-party' },
 ];
 
 export default function Navbar() {
@@ -19,7 +21,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const { setSearchOpen, profile, unreadCount } = useAppStore();
+  const { user } = useAuthStore();
   const profileRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -120,37 +124,46 @@ export default function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Profile */}
-            <div className="relative hidden lg:block" ref={profileRef}>
+            {/* Profile / Auth */}
+            {user ? (
+              <div className="relative hidden lg:block" ref={profileRef}>
+                <button
+                  onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
+                  className="flex items-center gap-2 group"
+                  aria-label="Profile menu"
+                  aria-expanded={profileOpen}
+                  id="profile-menu-btn"
+                >
+                  <div
+                    className="w-8 h-8 rounded-md flex items-center justify-center text-white font-bold text-sm transition-all duration-200 group-hover:ring-2 group-hover:ring-white/50"
+                    style={{ backgroundColor: profile.avatarColor }}
+                  >
+                    {(user.user_metadata?.display_name || user.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <motion.div
+                    animate={{ rotate: profileOpen ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown size={14} className="text-xf-muted" />
+                  </motion.div>
+                </button>
+                <AnimatePresence>
+                  {profileOpen && (
+                    <ProfileMenu
+                      onClose={() => setProfileOpen(false)}
+                      onNavigate={(path) => { navigate(path); setProfileOpen(false); }}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
               <button
-                onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
-                className="flex items-center gap-2 group"
-                aria-label="Profile menu"
-                aria-expanded={profileOpen}
-                id="profile-menu-btn"
+                onClick={() => setAuthModalOpen(true)}
+                className="hidden lg:flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/20 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
               >
-                <div
-                  className="w-8 h-8 rounded-md flex items-center justify-center text-white font-bold text-sm transition-all duration-200 group-hover:ring-2 group-hover:ring-white/50"
-                  style={{ backgroundColor: profile.avatarColor }}
-                >
-                  {profile.name.charAt(0).toUpperCase()}
-                </div>
-                <motion.div
-                  animate={{ rotate: profileOpen ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown size={14} className="text-xf-muted" />
-                </motion.div>
+                Sign In
               </button>
-              <AnimatePresence>
-                {profileOpen && (
-                  <ProfileMenu
-                    onClose={() => setProfileOpen(false)}
-                    onNavigate={(path) => { navigate(path); setProfileOpen(false); }}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
+            )}
 
             {/* Mobile hamburger */}
             <button
@@ -194,22 +207,35 @@ export default function Navbar() {
                 </NavLink>
               ))}
               <div className="border-t border-white/10 mt-2 pt-3 flex items-center gap-3">
-                <button
-                  onClick={() => { navigate('/profile'); setMobileOpen(false); }}
-                  className="flex items-center gap-2 text-sm text-xf-muted hover:text-white transition-colors"
-                >
-                  <div
-                    className="w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-xs"
-                    style={{ backgroundColor: profile.avatarColor }}
+                {user ? (
+                  <button
+                    onClick={() => { navigate('/profile'); setMobileOpen(false); }}
+                    className="flex items-center gap-2 text-sm text-xf-muted hover:text-white transition-colors"
                   >
-                    {profile.name.charAt(0).toUpperCase()}
-                  </div>
-                  {profile.name}
-                </button>
+                    <div
+                      className="w-7 h-7 rounded-md flex items-center justify-center text-white font-bold text-xs"
+                      style={{ backgroundColor: profile.avatarColor }}
+                    >
+                      {(user.user_metadata?.display_name || user.email || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    {user.user_metadata?.display_name || user.email}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setAuthModalOpen(true); setMobileOpen(false); }}
+                    className="w-full py-2.5 bg-white/10 border border-white/10 rounded-lg text-sm font-semibold text-white hover:bg-white/20 transition-colors"
+                  >
+                    Sign In
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
       </AnimatePresence>
     </motion.nav>
   );

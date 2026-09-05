@@ -3,14 +3,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Film, Tv, TrendingUp, Bookmark } from "lucide-react";
+import { Home, Film, Tv, Bookmark, Users } from "lucide-react";
 
 const items = [
   { id: 0, icon: <Home size={18} />, label: "Home", path: "/" },
   { id: 1, icon: <Film size={18} />, label: "Movies", path: "/movies" },
   { id: 2, icon: <Tv size={18} />, label: "TV Shows", path: "/tv-shows" },
-  { id: 3, icon: <TrendingUp size={18} />, label: "New & Popular", path: "/new-popular" },
-  { id: 4, icon: <Bookmark size={18} />, label: "My List", path: "/my-list" },
+  { id: 3, icon: <Bookmark size={18} />, label: "My List", path: "/my-list" },
+  { id: 4, icon: <Users size={18} />, label: "Movie Party", path: "/movie-party" },
 ];
 
 const FloatingNav = () => {

@@ -7,6 +7,7 @@ import SearchOverlay from '@/components/SearchOverlay';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import NotFound from '@/components/NotFound';
 import FloatingNav from '@/components/ui/floating-nav';
+import { useAuthStore } from '@/store/useAuthStore';
 
 // Lazy-loaded pages
 const Home = lazy(() => import('@/pages/Home'));
@@ -18,6 +19,8 @@ const Watch = lazy(() => import('@/pages/Watch'));
 const MyList = lazy(() => import('@/pages/MyList'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const Legal = lazy(() => import('@/pages/Legal'));
+const WatchParty = lazy(() => import('@/pages/WatchParty'));
+const MovieParty = lazy(() => import('@/pages/MovieParty'));
 
 function PageFallback() {
   return (
@@ -42,6 +45,11 @@ function ScrollToTop() {
 
 export default function App() {
   const location = useLocation();
+  const { initialize } = useAuthStore();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
 
   // Hide navbars on Watch and Details pages
   const hideNavs = location.pathname.startsWith('/watch') || 
@@ -65,6 +73,9 @@ export default function App() {
             <Route path="/tv/:id" element={<MovieDetails type="tv" />} />
             <Route path="/watch/movie/:id" element={<Watch type="movie" />} />
             <Route path="/watch/tv/:id" element={<Watch type="tv" />} />
+            <Route path="/watch-party" element={<WatchParty />} />
+            <Route path="/watch-party/:roomCode" element={<WatchParty />} />
+            <Route path="/movie-party" element={<MovieParty />} />
             <Route path="/my-list" element={<MyList />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/legal" element={<Legal />} />

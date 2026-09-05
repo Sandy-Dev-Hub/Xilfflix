@@ -9,7 +9,8 @@ function tmdbLocalProxy(env: Record<string, string>) {
     configureServer(server: any) {
       server.middlewares.use('/api/tmdb', async (req: any, res: any) => {
         try {
-          const token = env.TMDB_ACCESS_TOKEN;
+          const currentEnv = loadEnv('', process.cwd(), '');
+          const token = currentEnv.TMDB_ACCESS_TOKEN || process.env.TMDB_ACCESS_TOKEN || env.TMDB_ACCESS_TOKEN;
           if (!token) {
             res.statusCode = 500;
             res.end(JSON.stringify({ error: 'TMDB_ACCESS_TOKEN is not configured' }));

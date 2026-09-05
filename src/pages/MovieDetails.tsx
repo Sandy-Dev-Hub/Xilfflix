@@ -9,6 +9,7 @@ import {
   Clock,
   Calendar,
   Shield,
+  Users,
 } from 'lucide-react';
 import { getMovieDetails } from '@/services/tmdb';
 import { useTMDB } from '@/hooks/useTMDB';
@@ -219,6 +220,26 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
               >
                 {inList ? <Check size={18} /> : <Plus size={18} />}
                 {inList ? 'In My List' : 'My List'}
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/movie-party', {
+                  state: {
+                    createFor: {
+                      movieId: movie.id,
+                      movieType: movie.type,
+                      movieTitle: movie.title,
+                      moviePoster: movie.poster || '',
+                    }
+                  }
+                })}
+                className="flex items-center gap-2 px-6 py-3 bg-xf-card border border-white/20 text-white font-semibold rounded-lg hover:bg-xf-secondary transition-colors"
+                id={`details-party-${movie.id}`}
+              >
+                <Users size={18} />
+                Watch With Friends
               </motion.button>
             </div>
           </motion.div>

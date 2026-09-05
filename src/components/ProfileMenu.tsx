@@ -5,7 +5,9 @@ import {
   List,
   PlayCircle,
   Settings,
+  LogOut,
 } from 'lucide-react';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface ProfileMenuProps {
   onClose: () => void;
@@ -20,6 +22,13 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileMenu({ onClose, onNavigate }: ProfileMenuProps) {
+  const { signOut } = useAuthStore();
+
+  const handleSignOut = async () => {
+    await signOut();
+    onClose();
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8, scale: 0.95 }}
@@ -42,6 +51,15 @@ export default function ProfileMenu({ onClose, onNavigate }: ProfileMenuProps) {
           {label}
         </button>
       ))}
+      <div className="border-t border-white/10 mt-1 pt-1 pb-1">
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-xf-muted hover:text-white hover:bg-white/8 transition-colors duration-150 group"
+        >
+          <LogOut size={16} className="text-xf-subtle group-hover:text-xf-red transition-colors" />
+          Sign Out
+        </button>
+      </div>
     </motion.div>
   );
 }

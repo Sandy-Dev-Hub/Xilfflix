@@ -16,22 +16,24 @@ export function makeServers(
     return [
       { name: 'Server 1 (Multi-Lang)', status: 'online', sourceUrl: '' },
       { name: 'Server 2 (4K)', status: 'online', sourceUrl: '' },
-      { name: 'Server 3', status: 'online', sourceUrl: '' },
+      { name: 'Server 3 (2K)', status: 'online', sourceUrl: '' },
+      { name: 'Server 4', status: 'online', sourceUrl: '' },
     ];
   }
 
   if (mediaType === 'movie') {
     let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
-    let server2Url = `https://vidsrc.sbs/embed/movie/${tmdbId}`;
-    let server3Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
-    let server2Status: 'online' | 'offline' = 'online';
+    let server2Url = `https://player.videasy.to/movie/${tmdbId}?color=E50914`;
+    let server3Url = `https://vixsrc.to/movie/${tmdbId}`;
+    let server4Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
+    let server3Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies
     if (tmdbId === '37941') {
-      server3Url = `https://vidsrc.wiki/embed/movie/37941`;
-      server2Status = 'offline'; // vidsrc.sbs plays wrong film for this ID
+      server4Url = `https://vidsrc.wiki/embed/movie/37941`;
+      server3Status = 'offline'; // vidsrc.sbs plays wrong film for this ID
     } else if (tmdbId === '329135') {
-      server3Url = `https://vidsrc.wiki/embed/movie/329135`;
+      server4Url = `https://vidsrc.wiki/embed/movie/329135`;
     }
 
     return [
@@ -42,13 +44,18 @@ export function makeServers(
       },
       {
         name: 'Server 2 (4K)',
-        status: server2Status,
+        status: 'online',
         sourceUrl: server2Url,
       },
       {
-        name: 'Server 3',
-        status: 'online',
+        name: 'Server 3 (2K)',
+        status: server3Status,
         sourceUrl: server3Url,
+      },
+      {
+        name: 'Server 4',
+        status: 'online',
+        sourceUrl: server4Url,
       },
     ];
   }
@@ -61,12 +68,17 @@ export function makeServers(
       sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 2 (4K)',
+      name: 'Server 2 (Videasy)',
       status: 'online',
-      sourceUrl: `https://vidsrc.sbs/embed/tv/${tmdbId}/${season}/${episode}`,
+      sourceUrl: `https://player.videasy.to/tv/${tmdbId}/${season}/${episode}?color=E50914`,
     },
     {
-      name: 'Server 3',
+      name: 'Server 3 (2K)',
+      status: 'online',
+      sourceUrl: `https://vixsrc.to/tv/${tmdbId}/${season}/${episode}`,
+    },
+    {
+      name: 'Server 4',
       status: 'online',
       sourceUrl: `https://vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}/`,
     },
