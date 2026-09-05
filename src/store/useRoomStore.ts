@@ -14,25 +14,36 @@ import type {
 } from '@/types/watchparty';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 
-// ─── Session helpers (localStorage keyed by room id) ─────────────────────────
-// localStorage persists across tab closes and page refreshes.
+// ─── Session helpers (localStorage keyed by room id with memory fallback) ────
+const memorySessions = new Map<string, RoomSession>();
 const SESSION_KEY = (roomId: string) => `xf-room-${roomId}`;
 
 function saveSession(session: RoomSession) {
-  localStorage.setItem(SESSION_KEY(session.roomId), JSON.stringify(session));
+  memorySessions.set(session.roomId, session);
+  try {
+    localStorage.setItem(SESSION_KEY(session.roomId), JSON.stringify(session));
+  } catch {
+    // Incognito or storage blocked
+  }
 }
 
 function loadSession(roomId: string): RoomSession | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY(roomId));
-    return raw ? (JSON.parse(raw) as RoomSession) : null;
+    if (raw) return JSON.parse(raw) as RoomSession;
   } catch {
-    return null;
+    // Incognito or storage blocked
   }
+  return memorySessions.get(roomId) || null;
 }
 
 function clearSession(roomId: string) {
-  localStorage.removeItem(SESSION_KEY(roomId));
+  memorySessions.delete(roomId);
+  try {
+    localStorage.removeItem(SESSION_KEY(roomId));
+  } catch {
+    // Incognito or storage blocked
+  }
 }
 
 // ─── Avatar color palette ─────────────────────────────────────────────────────

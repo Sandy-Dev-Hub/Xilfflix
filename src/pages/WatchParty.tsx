@@ -225,7 +225,6 @@ export default function WatchParty() {
                 title="Watch Party Player"
                 className="w-full aspect-video border-0 shadow-2xl shadow-black/80"
                 allowFullScreen
-                sandbox={serverIdx === 0 ? "allow-same-origin allow-scripts allow-presentation" : undefined}
                 allow="autoplay; fullscreen; picture-in-picture"
                 onError={() => setIframeError(true)}
               />
