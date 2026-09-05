@@ -42,7 +42,7 @@ export default function JoinRoomModal({ onClose, createParams, initialCode }: Jo
           createParams.moviePoster,
           '' // Host name will be handled inside createRoom or defaulted
         );
-        if ('roomId' in res && res.roomId) {
+        if ('roomId' in res) {
           navigate(`/watch-party/${res.roomId}`);
         } else {
           setError(res.error || 'Failed to create room.');
@@ -80,7 +80,7 @@ export default function JoinRoomModal({ onClose, createParams, initialCode }: Jo
     setJoining(true);
     setError('');
     const res = await joinRoom(cleanCode, name);
-    if ('ok' in res && res.ok) {
+    if ('ok' in res) {
       navigate(`/watch-party/${cleanCode}`);
     } else {
       setError(res.error || 'Failed to join room.');
