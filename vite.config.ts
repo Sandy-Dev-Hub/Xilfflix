@@ -30,12 +30,13 @@ function tmdbLocalProxy(env: Record<string, string>) {
             /^\/trending\/(all|movie|tv)\/(day|week)$/,
             /^\/(movie|tv)\/(popular|top_rated|now_playing|upcoming|airing_today|on_the_air)$/,
             /^\/discover\/(movie|tv)$/,
-            /^\/search\/multi$/,
+            /^\/search\/(multi|movie|tv)$/,
             /^\/(movie|tv)\/\d+$/,
             /^\/(movie|tv)\/\d+\/similar$/,
             /^\/genre\/(movie|tv)\/list$/,
             /^\/movie\/\d+\/release_dates$/,
             /^\/tv\/\d+\/content_ratings$/,
+            /^\/tv\/\d+\/season\/\d+$/,
             /^\/(movie|tv)\/\d+\/images$/
           ];
 

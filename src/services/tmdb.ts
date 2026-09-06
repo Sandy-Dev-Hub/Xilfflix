@@ -137,6 +137,15 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
     : '';
 
+  const seasons: any[] = (item.seasons || [])
+    .filter((s: any) => s.season_number > 0)
+    .map((s: any) => ({
+      seasonNumber: s.season_number,
+      name: s.name || `Season ${s.season_number}`,
+      episodeCount: s.episode_count || 1,
+      posterPath: s.poster_path ? `https://image.tmdb.org/t/p/w300${s.poster_path}` : null,
+    }));
+
   return {
     id: String(item.id),
     title: item.title || item.name || 'Unknown',
@@ -152,6 +161,9 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     cast,
     director: directorObj ? directorObj.name : undefined,
     servers: makeServers(String(item.id), type),
+    numberOfSeasons: item.number_of_seasons ?? (seasons.length > 0 ? seasons.length : undefined),
+    numberOfEpisodes: item.number_of_episodes,
+    seasons: seasons.length > 0 ? seasons : undefined,
     tags,
     badges,
     region: 'US',
@@ -193,35 +205,67 @@ export async function getNewReleases(): Promise<Movie[]> {
   return data.results.map((item: any) => normalizeTMDB(item, 'movie'));
 }
 
-export async function getDiscoverMovies(genreId?: number, language?: string): Promise<Movie[]> {
+export function resolveLanguageCode(lang?: string): string | undefined {
+  if (!lang) return undefined;
+  if (lang === 'all' || lang === 'international') {
+    return 'ko|ja|es|fr|zh|de|it';
+  }
+  return lang;
+}
+
+const MOVIE_TO_TV_GENRE_MAP: Record<number, string> = {
+  28: '10759',        // Action -> Action & Adventure
+  12: '10759',        // Adventure -> Action & Adventure
+  878: '10765',       // Sci-Fi -> Sci-Fi & Fantasy
+  14: '10765',        // Fantasy -> Sci-Fi & Fantasy
+  53: '9648|80',      // Thriller -> Mystery | Crime (Thrillers)
+  27: '9648|10765',   // Horror -> Mystery | Supernatural / Sci-Fi Horror
+  10749: '18|35',     // Romance -> Drama | Comedy Romance
+  10752: '10768',     // War -> War & Politics
+};
+
+export function resolveTVGenreId(genreId?: number | string): string | undefined {
+  if (!genreId) return undefined;
+  const num = typeof genreId === 'number' ? genreId : parseInt(genreId, 10);
+  if (!isNaN(num) && MOVIE_TO_TV_GENRE_MAP[num]) {
+    return MOVIE_TO_TV_GENRE_MAP[num];
+  }
+  return String(genreId);
+}
+
+export async function getDiscoverMovies(genreId?: number | string, language?: string): Promise<Movie[]> {
   const params: Record<string, string> = {};
   if (genreId) params.with_genres = String(genreId);
-  if (language) params.with_original_language = language;
+  const lang = resolveLanguageCode(language);
+  if (lang) params.with_original_language = lang;
   const data = await fetchTMDB('/discover/movie', params);
   return data.results.map((item: any) => normalizeTMDB(item, 'movie'));
 }
 
-export async function getDiscoverTV(genreId?: number, language?: string): Promise<Movie[]> {
+export async function getDiscoverTV(genreId?: number | string, language?: string): Promise<Movie[]> {
   const params: Record<string, string> = {};
-  if (genreId) params.with_genres = String(genreId);
-  if (language) params.with_original_language = language;
+  const resolved = resolveTVGenreId(genreId);
+  if (resolved) params.with_genres = resolved;
+  const lang = resolveLanguageCode(language);
+  if (lang) params.with_original_language = lang;
   const data = await fetchTMDB('/discover/tv', params);
   return data.results.map((item: any) => normalizeTMDB(item, 'tv'));
 }
 
 /** Paginated discover for infinite-scroll rows. Results are cached in-memory. */
 export async function getDiscoverMoviesPage(
-  genreId: number | undefined,
+  genreId: number | string | undefined,
   page: number,
   sortBy = 'popularity.desc',
   language?: string
 ): Promise<{ movies: Movie[]; totalPages: number }> {
-  const cacheKey = `discover-movie-${genreId ?? 'all'}-${language ?? 'all'}-${page}-${sortBy}`;
+  const lang = resolveLanguageCode(language);
+  const cacheKey = `discover-movie-${genreId ?? 'all'}-${lang ?? 'all'}-${page}-${sortBy}`;
   if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
 
   const params: Record<string, string> = { page: String(page), sort_by: sortBy };
   if (genreId) params.with_genres = String(genreId);
-  if (language) params.with_original_language = language;
+  if (lang) params.with_original_language = lang;
   const data = await fetchTMDB('/discover/movie', params);
   const result = {
     movies: data.results.map((item: any) => normalizeTMDB(item, 'movie')),
@@ -233,17 +277,19 @@ export async function getDiscoverMoviesPage(
 
 /** Paginated discover TV for infinite-scroll rows. Results are cached in-memory. */
 export async function getDiscoverTVPage(
-  genreId: number | undefined,
+  genreId: number | string | undefined,
   page: number,
   sortBy = 'popularity.desc',
   language?: string
 ): Promise<{ movies: Movie[]; totalPages: number }> {
-  const cacheKey = `discover-tv-${genreId ?? 'all'}-${language ?? 'all'}-${page}-${sortBy}`;
+  const resolved = resolveTVGenreId(genreId);
+  const lang = resolveLanguageCode(language);
+  const cacheKey = `discover-tv-${resolved ?? 'all'}-${lang ?? 'all'}-${page}-${sortBy}`;
   if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
 
   const params: Record<string, string> = { page: String(page), sort_by: sortBy };
-  if (genreId) params.with_genres = String(genreId);
-  if (language) params.with_original_language = language;
+  if (resolved) params.with_genres = resolved;
+  if (lang) params.with_original_language = lang;
   const data = await fetchTMDB('/discover/tv', params);
   const result = {
     movies: data.results.map((item: any) => normalizeTMDB(item, 'tv')),
@@ -286,6 +332,24 @@ export async function getMovieDetails(id: string, type: 'movie' | 'tv'): Promise
   return normalizeTMDB(data, type);
 }
 
+export async function getTVSeason(tvId: string, seasonNumber: number): Promise<any[]> {
+  try {
+    const data = await fetchTMDB(`/tv/${tvId}/season/${seasonNumber}`);
+    if (!data.episodes) return [];
+    return data.episodes.map((ep: any) => ({
+      episodeNumber: ep.episode_number,
+      name: ep.name || `Episode ${ep.episode_number}`,
+      overview: ep.overview || '',
+      stillPath: ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null,
+      airDate: ep.air_date || '',
+      runtime: ep.runtime,
+    }));
+  } catch (e) {
+    console.error(`Failed to fetch season ${seasonNumber} for tv ${tvId}:`, e);
+    return [];
+  }
+}
+
 export async function getMovieLogo(id: string, type: 'movie' | 'tv'): Promise<string | null> {
   try {
     // Fetch all images without language restriction to ensure we don't miss foreign logos
@@ -306,10 +370,82 @@ export async function getMovieLogo(id: string, type: 'movie' | 'tv'): Promise<st
   return null;
 }
 
-export async function searchContent(query: string): Promise<Movie[]> {
+export async function searchContent(rawQuery: string): Promise<Movie[]> {
+  const query = rawQuery?.trim();
   if (!query) return [];
-  const data = await fetchTMDB('/search/multi', { query });
-  return data.results.filter((i: any) => i.media_type !== 'person').map((item: any) => normalizeTMDB(item));
+
+  // Helper to title-case words (e.g. "stranger things" -> "Stranger Things")
+  const toTitleCase = (str: string) =>
+    str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
+
+  try {
+    // 1. Fetch search/multi with query
+    const data = await fetchTMDB('/search/multi', { query });
+    let rawItems = (data.results || []).filter((i: any) => i.media_type !== 'person');
+
+    // 2. If no results or very few results, try title-cased query as fallback
+    const titleCased = toTitleCase(query);
+    if (rawItems.length === 0 && query !== titleCased) {
+      try {
+        const fallbackData = await fetchTMDB('/search/multi', { query: titleCased });
+        rawItems = (fallbackData.results || []).filter((i: any) => i.media_type !== 'person');
+      } catch {}
+    }
+
+    // 3. Direct movie & tv search fallback if still empty
+    if (rawItems.length === 0) {
+      try {
+        const [movieRes, tvRes] = await Promise.allSettled([
+          fetchTMDB('/search/movie', { query }),
+          fetchTMDB('/search/tv', { query }),
+        ]);
+        const movieItems = movieRes.status === 'fulfilled' ? (movieRes.value.results || []).map((m: any) => ({ ...m, media_type: 'movie' })) : [];
+        const tvItems = tvRes.status === 'fulfilled' ? (tvRes.value.results || []).map((t: any) => ({ ...t, media_type: 'tv' })) : [];
+        rawItems = [...movieItems, ...tvItems];
+      } catch {}
+    }
+
+    // Deduplicate by ID and media type
+    const seen = new Set<string>();
+    const uniqueItems: any[] = [];
+    for (const item of rawItems) {
+      const key = `${item.media_type || (item.first_air_date ? 'tv' : 'movie')}-${item.id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueItems.push(item);
+      }
+    }
+
+    const normalized = uniqueItems.map((item: any) => normalizeTMDB(item));
+    const qLower = query.toLowerCase();
+
+    // Case-insensitive relevance sorting
+    return normalized.sort((a, b) => {
+      const aTitle = (a.title || '').toLowerCase();
+      const bTitle = (b.title || '').toLowerCase();
+
+      // 1. Exact match (case-insensitive)
+      const aExact = aTitle === qLower ? 1 : 0;
+      const bExact = bTitle === qLower ? 1 : 0;
+      if (aExact !== bExact) return bExact - aExact;
+
+      // 2. Starts with query (case-insensitive)
+      const aStarts = aTitle.startsWith(qLower) ? 1 : 0;
+      const bStarts = bTitle.startsWith(qLower) ? 1 : 0;
+      if (aStarts !== bStarts) return bStarts - aStarts;
+
+      // 3. Includes query (case-insensitive)
+      const aContains = aTitle.includes(qLower) ? 1 : 0;
+      const bContains = bTitle.includes(qLower) ? 1 : 0;
+      if (aContains !== bContains) return bContains - aContains;
+
+      // 4. Sort by popularity / rating
+      return (b.rating || 0) - (a.rating || 0);
+    });
+  } catch (err) {
+    console.error('Search error:', err);
+    return [];
+  }
 }
 
 /**

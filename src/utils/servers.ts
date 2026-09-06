@@ -15,23 +15,24 @@ export function makeServers(
     // Fallback while ID is not yet known (e.g. before TMDB fetch completes)
     return [
       { name: 'Server 1 (Multi-Lang)', status: 'online', sourceUrl: '' },
-      { name: 'Server 2 (4K)', status: 'online', sourceUrl: '' },
-      { name: 'Server 3 (2K)', status: 'online', sourceUrl: '' },
+      { name: 'Server 2 (2k)', status: 'online', sourceUrl: '' },
+      { name: 'Server 3 (4K)', status: 'online', sourceUrl: '' },
       { name: 'Server 4', status: 'online', sourceUrl: '' },
     ];
   }
 
   if (mediaType === 'movie') {
     let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
-    let server2Url = `https://player.videasy.to/movie/${tmdbId}?color=E50914`;
-    let server3Url = `https://vixsrc.to/movie/${tmdbId}`;
+    let server2Url = `https://framextv.tech/embed/${tmdbId}`;
+    let server3Url = `https://player.videasy.to/movie/${tmdbId}?color=E50914`;
     let server4Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
+    let server2Status: 'online' | 'offline' = 'online';
     let server3Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies
     if (tmdbId === '37941') {
       server4Url = `https://vidsrc.wiki/embed/movie/37941`;
-      server3Status = 'offline'; // vidsrc.sbs plays wrong film for this ID
+      server3Status = 'offline';
     } else if (tmdbId === '329135') {
       server4Url = `https://vidsrc.wiki/embed/movie/329135`;
     }
@@ -43,12 +44,12 @@ export function makeServers(
         sourceUrl: server1Url,
       },
       {
-        name: 'Server 2 (4K)',
-        status: 'online',
+        name: 'Server 2 (2k)',
+        status: server2Status,
         sourceUrl: server2Url,
       },
       {
-        name: 'Server 3 (2K)',
+        name: 'Server 3 (4K)',
         status: server3Status,
         sourceUrl: server3Url,
       },
@@ -68,14 +69,14 @@ export function makeServers(
       sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 2 (Videasy)',
+      name: 'Server 2 (2k)',
       status: 'online',
-      sourceUrl: `https://player.videasy.to/tv/${tmdbId}/${season}/${episode}?color=E50914`,
+      sourceUrl: `https://framextv.tech/embed/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 3 (2K)',
+      name: 'Server 3 (4K)',
       status: 'online',
-      sourceUrl: `https://vixsrc.to/tv/${tmdbId}/${season}/${episode}`,
+      sourceUrl: `https://player.videasy.to/tv/${tmdbId}/${season}/${episode}?color=E50914`,
     },
     {
       name: 'Server 4',

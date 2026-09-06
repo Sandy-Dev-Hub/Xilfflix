@@ -6,6 +6,22 @@ export interface Server {
   sourceUrl: string;
 }
 
+export interface SeasonInfo {
+  seasonNumber: number;
+  name: string;
+  episodeCount: number;
+  posterPath?: string | null;
+}
+
+export interface EpisodeInfo {
+  episodeNumber: number;
+  name: string;
+  overview: string;
+  stillPath: string | null;
+  airDate: string;
+  runtime?: number;
+}
+
 export interface Movie {
   id: string;
   title: string;
@@ -26,6 +42,10 @@ export interface Movie {
   isTrending?: boolean;
   isNewRelease?: boolean;
   isTopRated?: boolean;
+  // TV Series metadata
+  numberOfSeasons?: number;
+  numberOfEpisodes?: number;
+  seasons?: SeasonInfo[];
   // Addendum fields
   tags?: string[];        // Mood tags derived from genres e.g. ["Tense", "Gritty", "Suspenseful"]
   topTenRank?: number;   // 1-10 for Top 10 rows

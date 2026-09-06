@@ -103,25 +103,25 @@ export default function RoomLobby({
             <p className="text-xf-subtle text-xs font-semibold uppercase tracking-wider mb-2">
               Room Code
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex items-stretch gap-2.5">
               <div className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
                 <span className="font-mono text-lg font-bold tracking-[0.2em] text-white">
                   {room.id}
                 </span>
                 <button
                   onClick={handleCopy}
-                  className="text-xf-muted hover:text-white transition-colors p-1"
+                  className="text-xf-muted hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5 active:scale-95"
                   title="Copy link"
                 >
-                  {copied ? <Check size={18} className="text-green-400" /> : <Copy size={18} />}
+                  {copied ? <Check size={20} className="text-emerald-400" /> : <Copy size={20} />}
                 </button>
               </div>
               <button
                 onClick={handleShare}
-                className="h-full px-4 bg-xf-card hover:bg-white/10 border border-white/10 rounded-xl transition-colors text-xf-muted hover:text-white flex items-center justify-center"
-                title="Share"
+                className="px-4 bg-white/5 hover:bg-white/10 active:bg-white/15 active:scale-95 border border-white/10 hover:border-white/20 rounded-xl transition-all text-white/80 hover:text-white flex items-center justify-center flex-shrink-0 shadow-sm"
+                title="Share Room"
               >
-                <Share2 size={18} />
+                <Share2 size={22} className="text-white/90" />
               </button>
             </div>
             <p className="text-xf-subtle text-[11px] mt-2">

@@ -56,7 +56,7 @@ const FloatingNav = () => {
   }, [active]);
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 pointer-events-none">
+    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-2 sm:px-4 pointer-events-none">
       <div
         ref={containerRef}
         className="relative flex items-center justify-between bg-[#181818]/90 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-full px-1 py-0.5 border border-white/10 pointer-events-auto"
@@ -68,12 +68,12 @@ const FloatingNav = () => {
               key={item.id}
               ref={(el) => (btnRefs.current[index] = el)}
               onClick={() => navigate(item.path)}
-              className={`relative flex flex-col items-center justify-center flex-1 px-1 py-2 text-sm font-medium transition-colors duration-300 ${
+              className={`relative flex flex-col items-center justify-center flex-1 px-0.5 sm:px-1 py-1.5 sm:py-2 text-sm font-medium transition-colors duration-300 ${
                 isActive ? "text-white" : "text-white/50 hover:text-white/80"
               }`}
             >
               <div className="z-10">{item.icon}</div>
-              <span className="text-[9px] mt-1 font-bold uppercase tracking-wider hidden sm:block z-10">
+              <span className="text-[8px] sm:text-[9px] mt-0.5 sm:mt-1 font-bold uppercase tracking-tight sm:tracking-wider z-10 whitespace-nowrap">
                 {item.label}
               </span>
             </button>

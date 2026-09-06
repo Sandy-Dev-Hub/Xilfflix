@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     /^\/genre\/(movie|tv)\/list$/,
     /^\/movie\/\d+\/release_dates$/,
     /^\/tv\/\d+\/content_ratings$/,
+    /^\/tv\/\d+\/season\/\d+$/,
     /^\/(movie|tv)\/\d+\/images$/,
   ];
 

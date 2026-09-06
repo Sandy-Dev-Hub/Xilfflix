@@ -72,8 +72,8 @@ export default function JoinRoomModal({ onClose, createParams, initialCode }: Jo
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = code.trim().toUpperCase();
-    if (cleanCode.length !== 8) {
-      setError('Room code must be 8 characters.');
+    if (cleanCode.length < 4 || cleanCode.length > 12) {
+      setError('Please enter a valid room code.');
       return;
     }
     

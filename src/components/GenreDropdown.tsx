@@ -74,19 +74,19 @@ export default function GenreDropdown({ selected, onSelect, triggerLabel, trigge
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200
+        className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border text-xs sm:text-sm font-medium transition-all duration-200 shrink-0
           ${selected || triggerLabel
-            ? 'bg-[#181818] text-white border-white/20 hover:bg-white/10'
-            : 'bg-transparent border-white/30 text-white hover:border-white/60'
+            ? 'bg-[#181818] text-white border-white/25 hover:bg-white/10'
+            : 'bg-transparent border-white/30 text-white hover:border-white/60 hover:bg-white/5'
           }`}
       >
         {triggerIcon}
-        {selected ? selected.label : (triggerLabel || 'Genres')}
-        {!triggerIcon && (
-          <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={14} />
-          </motion.span>
-        )}
+        <span className="truncate max-w-[85px] sm:max-w-none">
+          {selected ? selected.label : (triggerLabel || 'Genres')}
+        </span>
+        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0">
+          <ChevronDown size={13} className="sm:w-3.5 sm:h-3.5" />
+        </motion.span>
       </button>
 
       {/* Dropdown panel */}
@@ -139,7 +139,7 @@ export default function GenreDropdown({ selected, onSelect, triggerLabel, trigge
               </motion.div>
             </div>
 
-            {/* Mobile Panel via Portal */}
+            {/* Mobile Panel via Portal (slides bottom to top) */}
             {typeof document !== 'undefined' && createPortal(
               <div className="md:hidden relative z-[999999]">
                 <motion.div
@@ -155,20 +155,20 @@ export default function GenreDropdown({ selected, onSelect, triggerLabel, trigge
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: '100%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="fixed left-0 right-0 bottom-0 z-[999999] bg-[#1A1A1A] border-t border-white/10 rounded-t-2xl shadow-2xl p-5 max-h-[85vh] overflow-y-auto"
+                  className="fixed left-0 right-0 bottom-0 z-[999999] bg-[#1A1A1A] border-t border-white/10 rounded-t-2xl shadow-2xl p-5 pb-8 max-h-[85vh] overflow-y-auto"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-white font-bold text-lg">Filters</h3>
+                    <h3 className="text-white font-bold text-base">Select Genre / Language</h3>
                     {selected && (
                       <button
                         onClick={() => { onSelect(null); setOpen(false); }}
-                        className="text-xf-red text-sm font-medium"
+                        className="text-xf-red text-xs font-semibold hover:underline"
                       >
-                        Clear
+                        ✕ Clear
                       </button>
                     )}
                   </div>
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-5">
                     {GENRE_COLUMNS.map((col) => (
                       <div key={col.heading}>
                         <p className="text-xf-subtle text-[11px] font-semibold uppercase tracking-wider mb-2">
@@ -179,10 +179,10 @@ export default function GenreDropdown({ selected, onSelect, triggerLabel, trigge
                             <li key={String(opt.id)}>
                               <button
                                 onClick={() => handleSelect(opt)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-150 border
+                                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors duration-150 border
                                   ${selected?.id === opt.id
-                                    ? 'bg-white text-black border-white'
-                                    : 'bg-transparent text-white border-white/20 hover:bg-white/10'
+                                    ? 'bg-white text-black border-white font-semibold'
+                                    : 'bg-white/5 text-white border-white/15 hover:bg-white/10'
                                   }`}
                               >
                                 {opt.label}

@@ -70,19 +70,21 @@ export default function Navbar() {
     >
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 lg:h-16">
-          {/* Logo */}
-          <Link
-            to="/"
-            className="flex-shrink-0 focus-visible:outline-xf-red"
-            aria-label="Xilfflix Home"
-          >
-            <span className="font-display font-black text-2xl lg:text-3xl tracking-tighter">
-              <span className="text-xf-red">X</span>
-              <span className="text-white">ILFFLIX</span>
-            </span>
-          </Link>
-          
-          <div id="navbar-addon" className="hidden md:flex items-center" />
+          {/* Logo & Addon */}
+          <div className="flex items-center min-w-0">
+            <Link
+              to="/"
+              className="flex-shrink-0 focus-visible:outline-xf-red"
+              aria-label="Xilfflix Home"
+            >
+              <span className="font-display font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter">
+                <span className="text-xf-red">X</span>
+                <span className="text-white">ILFFLIX</span>
+              </span>
+            </Link>
+            
+            <div id="navbar-addon" className="flex items-center min-w-0" />
+          </div>
 
           {/* Desktop nav links removed (using floating nav instead) */}
           <nav className="hidden lg:flex items-center gap-0.5 ml-8" aria-label="Primary navigation">

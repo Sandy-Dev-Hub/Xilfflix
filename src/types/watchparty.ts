@@ -24,6 +24,8 @@ export interface WatchPartyRoom {
   participantLimit: number;
   createdAt: string;
   expiresAt: string;
+  season?: number;
+  episode?: number;
 }
 
 // ─── Participant ──────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Info, Tv2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
-import { getMovieDetails } from '@/services/tmdb';
+import { getMovieDetails, getTVSeason } from '@/services/tmdb';
 import { useTMDB } from '@/hooks/useTMDB';
 import { useAppStore } from '@/store/useAppStore';
 import { makeServers } from '@/utils/servers';
@@ -18,7 +18,7 @@ const pageVariants = {
 export default function Watch({ type }: { type: 'movie' | 'tv' }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { saveProgress, getProgress, profile } = useAppStore();
+  const { saveProgress, getProgress } = useAppStore();
 
   // TV-specific state
   const [season, setSeason] = useState(1);
@@ -26,11 +26,30 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
   const [serverIdx, setServerIdx] = useState(0);
   const [iframeKey, setIframeKey] = useState(0); // force iframe reload on server/ep change
   const [iframeError, setIframeError] = useState(false);
+  const [seasonEpisodes, setSeasonEpisodes] = useState<any[]>([]);
 
   const { data: movie, loading, error } = useTMDB(() => {
     if (!id) return Promise.reject(new Error('No ID'));
     return getMovieDetails(id, type);
   }, [id, type]);
+
+  // Fetch actual season episodes when TV show ID or season changes
+  useEffect(() => {
+    if (type !== 'tv' || !movie?.id) return;
+    let isMounted = true;
+    getTVSeason(movie.id, season)
+      .then((eps) => {
+        if (isMounted) {
+          setSeasonEpisodes(eps);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setSeasonEpisodes([]);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [type, movie?.id, season]);
 
   // Save progress as a simple time-based snapshot (iframe doesn't expose currentTime)
   useEffect(() => {
@@ -68,6 +87,13 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
     handleServerSwitch(next);
   }, [serverIdx, servers.length, handleServerSwitch]);
 
+  const handleSeasonChange = useCallback((s: number) => {
+    setSeason(s);
+    setEpisode(1);
+    setIframeError(false);
+    setIframeKey((k) => k + 1);
+  }, []);
+
   const handleEpisodeChange = useCallback((s: number, e: number) => {
     setSeason(s);
     setEpisode(e);
@@ -78,15 +104,21 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
   if (error) return <NotFound />;
   if (loading || !movie) {
     return (
-      <div className="pt-20 bg-xf-bg min-h-screen">
+      <div className="pt-6 bg-xf-bg min-h-screen">
         <LoadingSkeleton variant="hero" />
       </div>
     );
   }
 
-  // Estimate total seasons for TV (TMDB detail returns number_of_seasons when fetched with full details)
-  const totalSeasons = (movie as any).number_of_seasons ?? 3;
-  const episodesPerSeason = 12; // reasonable default when we don't have episode list
+  // Real season and episode counts from TMDB
+  const seasons = movie.seasons || [];
+  const totalSeasons = seasons.length > 0 ? seasons.length : (movie.numberOfSeasons ?? 1);
+  const currentSeasonObj = seasons.find((s) => s.seasonNumber === season);
+  const episodeCount = seasonEpisodes.length > 0 
+    ? seasonEpisodes.length 
+    : (currentSeasonObj?.episodeCount ?? 8);
+
+  const currentEpDetail = seasonEpisodes.find((ep) => ep.episodeNumber === episode);
 
   return (
     <motion.div
@@ -96,7 +128,7 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
       exit="exit"
       className="min-h-screen bg-xf-bg"
     >
-      <div className="max-w-screen-xl mx-auto px-3 sm:px-6 lg:px-8 pt-20 pb-16">
+      <div className="max-w-screen-xl mx-auto px-3 sm:px-6 lg:px-8 pt-5 sm:pt-6 pb-16">
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
@@ -140,7 +172,7 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
           <div className="flex items-center gap-2 mt-1 text-sm text-xf-muted flex-wrap">
             {movie.year > 0 && <span>{movie.year}</span>}
             {movie.year > 0 && <span>·</span>}
-            <span>{type === 'tv' ? 'TV Series' : 'Movie'}</span>
+            <span>{type === 'tv' ? `${totalSeasons} Season${totalSeasons > 1 ? 's' : ''}` : 'Movie'}</span>
             {movie.ageRating && <><span>·</span><span>{movie.ageRating}</span></>}
           </div>
         </div>
@@ -174,6 +206,21 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
             />
           )}
         </div>
+
+        {/* ── Current Episode Info (TV) ── */}
+        {type === 'tv' && currentEpDetail && (
+          <div className="mb-6 p-4 rounded-xl bg-white/[0.03] border border-white/10">
+            <p className="text-white font-semibold text-base">
+              <span className="text-xf-red font-bold mr-2">S{season} E{episode}</span>
+              {currentEpDetail.name}
+            </p>
+            {currentEpDetail.overview && (
+              <p className="text-xf-muted text-xs sm:text-sm mt-1.5 leading-relaxed line-clamp-3">
+                {currentEpDetail.overview}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── Server Switcher ─────────────────────────────────────────────────── */}
         <div className="mb-6">
@@ -221,21 +268,28 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
 
             {/* Season selector */}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className="text-xf-muted text-sm">Season:</span>
+              <span className="text-xf-muted text-sm font-medium">Season:</span>
               <div className="flex flex-wrap gap-1.5">
-                {Array.from({ length: totalSeasons }, (_, i) => i + 1).map((s) => (
+                {(seasons.length > 0
+                  ? seasons
+                  : Array.from({ length: totalSeasons }, (_, i) => ({
+                      seasonNumber: i + 1,
+                      name: `Season ${i + 1}`,
+                      episodeCount: 8,
+                    }))
+                ).map((s) => (
                   <button
-                    key={s}
-                    onClick={() => handleEpisodeChange(s, 1)}
-                    className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all duration-200 border
-                      ${s === season
-                        ? 'bg-white text-black border-white'
+                    key={s.seasonNumber}
+                    onClick={() => handleSeasonChange(s.seasonNumber)}
+                    className={`px-3.5 h-9 rounded-lg text-sm font-semibold transition-all duration-200 border flex items-center justify-center
+                      ${s.seasonNumber === season
+                        ? 'bg-white text-black border-white shadow-md'
                         : 'bg-xf-card text-xf-muted border-white/10 hover:border-white/30 hover:text-white'
                       }`}
-                    aria-pressed={s === season}
-                    aria-label={`Season ${s}`}
+                    aria-pressed={s.seasonNumber === season}
+                    aria-label={`Season ${s.seasonNumber}`}
                   >
-                    {s}
+                    {s.seasonNumber}
                   </button>
                 ))}
               </div>
@@ -243,7 +297,7 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
 
             {/* Episode selector */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xf-muted text-sm">Episode:</span>
+              <span className="text-xf-muted text-sm font-medium">Episode:</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => episode > 1 && handleEpisodeChange(season, episode - 1)}
@@ -253,26 +307,30 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from({ length: Math.min(episodesPerSeason, 24) }, (_, i) => i + 1).map((e) => (
-                    <button
-                      key={e}
-                      onClick={() => handleEpisodeChange(season, e)}
-                      className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all duration-200 border
-                        ${e === episode
-                          ? 'bg-white text-black border-white'
-                          : 'bg-xf-card text-xf-muted border-white/10 hover:border-white/30 hover:text-white'
-                        }`}
-                      aria-pressed={e === episode}
-                      aria-label={`Episode ${e}`}
-                    >
-                      {e}
-                    </button>
-                  ))}
+                <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-0.5">
+                  {Array.from({ length: episodeCount }, (_, i) => i + 1).map((e) => {
+                    const epDetail = seasonEpisodes.find((ep) => ep.episodeNumber === e);
+                    return (
+                      <button
+                        key={e}
+                        onClick={() => handleEpisodeChange(season, e)}
+                        title={epDetail?.name ? `E${e}: ${epDetail.name}` : `Episode ${e}`}
+                        className={`w-9 h-9 rounded-lg text-sm font-semibold transition-all duration-200 border flex items-center justify-center
+                          ${e === episode
+                            ? 'bg-white text-black border-white shadow-md'
+                            : 'bg-xf-card text-xf-muted border-white/10 hover:border-white/30 hover:text-white'
+                          }`}
+                        aria-pressed={e === episode}
+                        aria-label={`Episode ${e}`}
+                      >
+                        {e}
+                      </button>
+                    );
+                  })}
                 </div>
                 <button
-                  onClick={() => episode < episodesPerSeason && handleEpisodeChange(season, episode + 1)}
-                  disabled={episode >= episodesPerSeason}
+                  onClick={() => episode < episodeCount && handleEpisodeChange(season, episode + 1)}
+                  disabled={episode >= episodeCount}
                   className="w-9 h-9 rounded-lg bg-xf-card border border-white/10 text-white flex items-center justify-center disabled:opacity-30 hover:border-white/30 transition-colors"
                   aria-label="Next episode"
                 >
