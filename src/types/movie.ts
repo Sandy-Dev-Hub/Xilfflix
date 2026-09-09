@@ -50,8 +50,9 @@ export interface Movie {
   tags?: string[];        // Mood tags derived from genres e.g. ["Tense", "Gritty", "Suspenseful"]
   topTenRank?: number;   // 1-10 for Top 10 rows
   region?: string;        // e.g. "US" for "Top 10 in US"
-  badges?: string[];      // e.g. ["New Release", "Trending", "Top Rated"]
   similar?: Movie[];      // Similar movies suggestions
+  badges?: string[];      // e.g. ["New Release", "Trending", "Top Rated"]
+  originalLanguage?: string; // e.g. "ta", "te", "hi", "en", "ja", "ko"
 }
 
 export interface Notification {

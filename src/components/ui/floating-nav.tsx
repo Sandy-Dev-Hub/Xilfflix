@@ -1,94 +1,87 @@
-"use client";
-
-import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Home, Film, Tv, Bookmark, Users } from "lucide-react";
 
-const items = [
-  { id: 0, icon: <Home size={18} />, label: "Home", path: "/" },
-  { id: 1, icon: <Film size={18} />, label: "Movies", path: "/movies" },
-  { id: 2, icon: <Tv size={18} />, label: "TV Shows", path: "/tv-shows" },
-  { id: 3, icon: <Bookmark size={18} />, label: "My List", path: "/my-list" },
-  { id: 4, icon: <Users size={18} />, label: "Movie Party", path: "/movie-party" },
+const NAV_ITEMS = [
+  { id: 0, icon: Home, label: "Home", path: "/" },
+  { id: 1, icon: Film, label: "Movies", path: "/movies" },
+  { id: 2, icon: Tv, label: "TV Shows", path: "/tv-shows" },
+  { id: 3, icon: Bookmark, label: "My List", path: "/my-list" },
+  { id: 4, icon: Users, label: "Movie Party", path: "/movie-party" },
 ];
 
-const FloatingNav = () => {
-  const [active, setActive] = useState(0);
-  const [indicatorStyle, setIndicatorStyle] = useState({ width: 0, left: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+export default function FloatingNav() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Sync active state with the current URL
-  useEffect(() => {
-    const currentIndex = items.findIndex((item) => item.path === location.pathname);
-    if (currentIndex !== -1) {
-      setActive(currentIndex);
-    }
-  }, [location.pathname]);
+  const getActiveIndex = () => {
+    const p = location.pathname;
+    if (p === "/") return 0;
+    if (p.startsWith("/movies")) return 1;
+    if (p.startsWith("/tv-shows")) return 2;
+    if (p.startsWith("/my-list")) return 3;
+    if (p.startsWith("/movie-party") || p.startsWith("/watch-party")) return 4;
+    return -1;
+  };
 
-  // Update indicator position when active changes or resize
-  useEffect(() => {
-    const updateIndicator = () => {
-      if (btnRefs.current[active] && containerRef.current) {
-        const btn = btnRefs.current[active];
-        const container = containerRef.current;
-        if (!btn) return;
-        const btnRect = btn.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-
-        setIndicatorStyle({
-          width: btnRect.width,
-          left: btnRect.left - containerRect.left,
-        });
-      }
-    };
-
-    updateIndicator();
-    const timer = setTimeout(updateIndicator, 100);
-    window.addEventListener("resize", updateIndicator);
-    return () => {
-      window.removeEventListener("resize", updateIndicator);
-      clearTimeout(timer);
-    };
-  }, [active]);
+  const activeIndex = getActiveIndex();
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-2 sm:px-4 pointer-events-none">
-      <div
-        ref={containerRef}
-        className="relative flex items-center justify-between bg-[#181818]/90 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)] rounded-full px-1 py-0.5 border border-white/10 pointer-events-auto"
+    <div className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[96%] max-w-md sm:max-w-lg pointer-events-none">
+      <nav
+        aria-label="Mobile Bottom Navigation"
+        className="relative flex items-center justify-between bg-[#141414]/90 backdrop-blur-xl shadow-[0_10px_35px_rgba(0,0,0,0.65)] rounded-full p-1 border border-white/10 pointer-events-auto select-none"
       >
-        {items.map((item, index) => {
-          const isActive = active === index;
+        {NAV_ITEMS.map((item, index) => {
+          const isActive = activeIndex === index;
+          const Icon = item.icon;
+
           return (
             <button
-              key={item.id}
-              ref={(el) => (btnRefs.current[index] = el)}
+              key={item.path}
               onClick={() => navigate(item.path)}
-              className={`relative flex flex-col items-center justify-center flex-1 px-0.5 sm:px-1 py-1.5 sm:py-2 text-sm font-medium transition-colors duration-300 ${
-                isActive ? "text-white" : "text-white/50 hover:text-white/80"
+              aria-label={item.label}
+              aria-current={isActive ? "page" : undefined}
+              className={`relative flex-1 flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-full text-xs font-medium transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                isActive ? "text-white" : "text-white/50 hover:text-white/80 active:text-white/90"
               }`}
             >
-              <div className="z-10">{item.icon}</div>
-              <span className="text-[8px] sm:text-[9px] mt-0.5 sm:mt-1 font-bold uppercase tracking-tight sm:tracking-wider z-10 whitespace-nowrap">
-                {item.label}
+              {/* Smooth sliding translucent active capsule */}
+              {isActive && (
+                <motion.div
+                  layoutId="floatingNavActiveCapsule"
+                  className="absolute inset-0 rounded-full bg-white/15 backdrop-blur-md border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_2px_10px_rgba(0,0,0,0.35)]"
+                  transition={{
+                    type: "spring",
+                    stiffness: 420,
+                    damping: 32,
+                    mass: 0.8,
+                  }}
+                />
+              )}
+
+              {/* Content */}
+              <span className="relative z-10 flex flex-col items-center justify-center pointer-events-none">
+                <Icon
+                  size={19}
+                  className={`transition-all duration-200 ${
+                    isActive
+                      ? "text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.35)]"
+                      : "text-white/60"
+                  }`}
+                />
+                <span
+                  className={`text-[8.5px] sm:text-[9.5px] mt-0.5 tracking-tight uppercase whitespace-nowrap transition-all duration-200 ${
+                    isActive ? "font-bold text-white tracking-normal" : "font-medium text-white/60"
+                  }`}
+                >
+                  {item.label}
+                </span>
               </span>
             </button>
           );
         })}
-
-        {/* Sliding Active Indicator */}
-        <motion.div
-          animate={indicatorStyle}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="absolute top-1 bottom-1 rounded-full bg-white/10 border border-white/5"
-        />
-      </div>
+      </nav>
     </div>
   );
-};
-
-export default FloatingNav;
+}

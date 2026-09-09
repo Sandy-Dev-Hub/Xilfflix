@@ -5,6 +5,8 @@ import { Play, Plus, Check, ThumbsUp, ChevronDown, Volume2, VolumeX } from 'luci
 import { useState, useEffect } from 'react';
 import type { Movie } from '@/types/movie';
 import { useAppStore } from '@/store/useAppStore';
+import { getMovieTrailer } from '@/services/tmdb';
+import TrailerEmbed from './TrailerEmbed';
 import Badge from './Badge';
 
 interface HoverPreviewProps {
@@ -60,10 +62,31 @@ export default function HoverPreview({
 }: HoverPreviewProps) {
   const { addToList, removeFromList, isInList } = useAppStore();
   const inList = isInList(movie.id);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
+  const [videoKey, setVideoKey] = useState<string | null>(null);
+  const [showVideo, setShowVideo] = useState(false);
   const navigate = useNavigate();
 
   const { top, left, transformOrigin } = computePosition(anchorRect);
+
+  // Instant trailer fetch on hover
+  useEffect(() => {
+    let active = true;
+    getMovieTrailer(String(movie.id), movie.type, movie.originalLanguage)
+      .then((key) => {
+        if (active && key) {
+          setVideoKey(key);
+          setShowVideo(true);
+        }
+      })
+      .catch(() => {
+        // Keep static image on error
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [movie.id, movie.type, movie.originalLanguage]);
 
   // Close the popup when the user scrolls the page (so it doesn't detach)
   useEffect(() => {
@@ -132,8 +155,8 @@ export default function HoverPreview({
       onMouseLeave={onMouseLeave}
       onClick={handleInfo}
     >
-      {/* Image area */}
-      <div className="relative w-full" style={{ height: POPUP_IMG_HEIGHT }}>
+      {/* Image / Video area */}
+      <div className="relative w-full overflow-hidden bg-black" style={{ height: POPUP_IMG_HEIGHT }}>
         {thumbSrc ? (
           <img
             src={thumbSrc}
@@ -146,25 +169,36 @@ export default function HoverPreview({
             <span className="text-xf-subtle text-sm">{movie.title}</span>
           </div>
         )}
+
+        {/* Video Trailer overlay */}
+        {showVideo && videoKey && (
+          <TrailerEmbed
+            videoKey={videoKey}
+            muted={muted}
+            fitMode="full"
+          />
+        )}
+
         {/* Gradient overlay at bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#181818]/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#181818]/90 via-transparent to-transparent pointer-events-none" />
 
         {/* XILFFLIX watermark */}
-        <span className="absolute top-2 left-2.5 font-display font-black text-xs tracking-tighter text-white/60 select-none">
+        <span className="absolute top-2 left-2.5 font-display font-black text-xs tracking-tighter text-white/60 select-none pointer-events-none">
           <span className="text-xf-red">X</span>ILFFLIX
         </span>
 
         {/* Mute/unmute toggle */}
         <button
           onClick={(e) => { e.stopPropagation(); setMuted(!muted); }}
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center text-white/70 hover:text-white hover:bg-black/70 transition-colors"
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-colors z-20"
           aria-label={muted ? 'Unmute preview' : 'Mute preview'}
+          title={muted ? 'Unmute' : 'Mute'}
         >
           {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
         </button>
 
         {/* Title at bottom-left of image */}
-        <p className="absolute bottom-2 left-3 right-10 text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow">
+        <p className="absolute bottom-2 left-3 right-10 text-white font-bold text-sm leading-tight line-clamp-2 drop-shadow z-10 pointer-events-none">
           {movie.title}
         </p>
       </div>

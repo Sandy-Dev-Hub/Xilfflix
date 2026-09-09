@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -10,14 +11,17 @@ import {
   Calendar,
   Shield,
   Users,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
-import { getMovieDetails } from '@/services/tmdb';
+import { getMovieDetails, getMovieTrailer } from '@/services/tmdb';
 import { useTMDB } from '@/hooks/useTMDB';
 import { useAppStore } from '@/store/useAppStore';
 import MovieRow from '@/components/MovieRow';
 import Footer from '@/components/Footer';
 import NotFound from '@/components/NotFound';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
+import TrailerEmbed from '@/components/TrailerEmbed';
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -29,11 +33,34 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToList, removeFromList, isInList } = useAppStore();
+  const [trailerKey, setTrailerKey] = useState<string | null>(null);
+  const [showTrailer, setShowTrailer] = useState(false);
+  const [muted, setMuted] = useState(false);
 
   const { data: movie, loading, error } = useTMDB(() => {
     if (!id) return Promise.reject(new Error('No ID'));
     return getMovieDetails(id, type);
   }, [id, type]);
+
+  // Instant trailer fetch and autoplay on page open
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    getMovieTrailer(id, type, movie?.originalLanguage)
+      .then((key) => {
+        if (active && key) {
+          setTrailerKey(key);
+          setShowTrailer(true);
+        }
+      })
+      .catch(() => {
+        // Graceful fallback: keep static image
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, type, movie?.originalLanguage]);
 
   if (error) return <NotFound />;
   if (loading || !movie) {
@@ -45,16 +72,6 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
   }
 
   const inList = isInList(movie.id);
-
-  // We added 'similar' via append_to_response, but we need to extract it from the raw TMDB response if we didn't normalize it.
-  // Wait, our normalizer doesn't extract 'similar'. Let's just fetch it separately or update the service.
-  // Actually, I'll fetch it separately to keep the Movie object clean, or we can just fetch it here.
-  // Let's modify the component to just use a second hook for similar, or we can just skip it for now and add it in a sec.
-  
-  // For now, I'll just skip the similar row, or fetch it right here:
-  // I will add a second fetch for similar movies in a separate component or just fetch them here.
-  // Let's use getDiscoverMovies instead if we don't have it, but wait, we need similar.
-  // I will update tmdb.ts later to export getSimilar.
 
   const toggleList = () => {
     if (inList) removeFromList(movie.id);
@@ -73,7 +90,7 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
       className="min-h-screen bg-xf-bg"
     >
       {/* Backdrop */}
-      <div className="relative w-full h-[40vh] min-h-[250px] sm:h-[55vh] sm:min-h-[360px] overflow-hidden">
+      <div className="relative w-full h-[40vh] min-h-[250px] sm:h-[55vh] sm:min-h-[360px] overflow-hidden bg-black">
         {movie.backdrop && (
           <img
             src={movie.backdrop}
@@ -82,17 +99,40 @@ export default function MovieDetails({ type }: { type: 'movie' | 'tv' }) {
             loading="eager"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-xf-bg via-xf-bg/50 to-black/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-xf-bg/80 to-transparent" />
+
+        {/* Video Trailer Autoplay Background */}
+        {showTrailer && trailerKey && (
+          <TrailerEmbed
+            videoKey={trailerKey}
+            muted={muted}
+            fitMode="hero"
+          />
+        )}
+
+        {/* Overlay gradients - softened for a brighter, clearer trailer view */}
+        <div className="absolute inset-0 bg-gradient-to-t from-xf-bg via-xf-bg/30 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-xf-bg/60 via-transparent to-transparent pointer-events-none" />
 
         {/* Back button */}
         <button
-          onClick={() => navigate('/')}
-          className="absolute top-6 sm:top-8 left-4 sm:left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/30 backdrop-blur-sm px-3 py-2 rounded-lg text-sm"
+          onClick={() => navigate(-1)}
+          className="absolute top-6 sm:top-8 left-4 sm:left-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/40 hover:bg-black/60 border border-white/10 backdrop-blur-sm px-3 py-2 rounded-lg text-sm z-20"
         >
           <ArrowLeft size={16} />
           Back
         </button>
+
+        {/* Mute/Unmute toggle for hero trailer */}
+        {showTrailer && trailerKey && (
+          <button
+            onClick={() => setMuted(!muted)}
+            className="absolute top-6 sm:top-8 right-4 sm:right-8 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/40 hover:bg-black/60 border border-white/10 backdrop-blur-sm p-2.5 rounded-full text-sm z-20 active:scale-95"
+            title={muted ? 'Unmute trailer' : 'Mute trailer'}
+            aria-label={muted ? 'Unmute trailer' : 'Mute trailer'}
+          >
+            {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
+        )}
       </div>
 
       {/* Main info */}

@@ -168,6 +168,7 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     badges,
     region: 'US',
     similar,
+    originalLanguage: item.original_language || item.original_language_code || 'en',
   };
 }
 
@@ -368,6 +369,136 @@ export async function getMovieLogo(id: string, type: 'movie' | 'tv'): Promise<st
     console.error('Failed to fetch movie logo:', e);
   }
   return null;
+}
+
+// ─── Trailer video cache & fetcher ───────────────────────────────────────────
+const trailerCache = new Map<string, string | null>();
+
+const LANG_KEYWORDS: Record<string, string[]> = {
+  ta: ['tamil', 'ta'],
+  te: ['telugu', 'te'],
+  hi: ['hindi', 'hi', 'bollywood'],
+  ml: ['malayalam', 'ml'],
+  kn: ['kannada', 'kn'],
+  ja: ['japanese', 'japan', 'ja', 'anime'],
+  ko: ['korean', 'korea', 'ko'],
+  es: ['spanish', 'es', 'español'],
+  fr: ['french', 'fr', 'français'],
+  de: ['german', 'de', 'deutsch'],
+  it: ['italian', 'it', 'italiano'],
+  zh: ['chinese', 'mandarin', 'cantonese', 'zh'],
+  en: ['english', 'en'],
+};
+
+export async function getMovieTrailer(
+  id: string,
+  type: 'movie' | 'tv',
+  originalLanguage?: string
+): Promise<string | null> {
+  const targetLang = originalLanguage?.toLowerCase().trim() || '';
+  const cacheKey = `trailer-${type}-${id}-${targetLang || 'any'}`;
+  if (trailerCache.has(cacheKey)) return trailerCache.get(cacheKey)!;
+
+  try {
+    let rawVideos: any[] = [];
+
+    // Step 1: Multi-language video query
+    try {
+      const langList = targetLang && targetLang !== 'en'
+        ? `${targetLang},ta,te,hi,ml,kn,ja,ko,es,fr,de,it,zh,en,null`
+        : 'en,null,ta,te,hi,ml,kn,ja,ko,es,fr,de,it,zh';
+
+      const data = await fetchTMDB(`/${type}/${id}/videos`, {
+        include_video_language: langList,
+      });
+      if (data?.results && Array.isArray(data.results)) {
+        rawVideos.push(...data.results);
+      }
+    } catch {}
+
+    // Step 2: Unfiltered videos fallback if empty
+    if (rawVideos.length === 0) {
+      try {
+        const data = await fetchTMDB(`/${type}/${id}/videos`);
+        if (data?.results && Array.isArray(data.results)) {
+          rawVideos.push(...data.results);
+        }
+      } catch {}
+    }
+
+    // Step 3: TV show season videos fallback
+    if (rawVideos.length === 0 && type === 'tv') {
+      try {
+        const s1 = await fetchTMDB(`/tv/${id}/season/1/videos`);
+        if (s1?.results && Array.isArray(s1.results)) {
+          rawVideos.push(...s1.results);
+        }
+      } catch {}
+    }
+
+    // Step 4: Details append_to_response fallback
+    if (rawVideos.length === 0) {
+      try {
+        const details = await fetchTMDB(`/${type}/${id}`, { append_to_response: 'videos' });
+        if (details?.videos?.results && Array.isArray(details.videos.results)) {
+          rawVideos.push(...details.videos.results);
+        }
+      } catch {}
+    }
+
+    // Filter valid YouTube videos
+    const ytVideos = rawVideos.filter((v: any) => v && v.site === 'YouTube' && typeof v.key === 'string' && v.key.trim().length > 0);
+    if (ytVideos.length === 0) {
+      trailerCache.set(cacheKey, null);
+      return null;
+    }
+
+    // Score videos according to native language relevance and trailer type
+    const keywords = targetLang ? (LANG_KEYWORDS[targetLang] || [targetLang]) : [];
+
+    const scored = ytVideos.map((v: any) => {
+      let score = 0;
+      const name = (v.name || '').toLowerCase();
+      const vLang = (v.iso_639_1 || '').toLowerCase();
+      const vType = (v.type || '').toLowerCase();
+
+      const isTargetLang = targetLang && (
+        vLang === targetLang ||
+        keywords.some(kw => kw && name.includes(kw))
+      );
+
+      // Target language bonus
+      if (targetLang && targetLang !== 'en') {
+        if (isTargetLang) score += 150;
+        else if (vLang === 'en' || !vLang) score += 30; // secondary English fallback
+      } else {
+        if (vLang === 'en' || !vLang) score += 50;
+      }
+
+      // Video type priority
+      if (vType === 'trailer' || name.includes('trailer')) score += 70;
+      else if (vType === 'teaser' || name.includes('teaser') || name.includes('glimpse') || name.includes('promo')) score += 45;
+      else if (vType === 'clip' || name.includes('clip') || name.includes('sneak peek') || name.includes('scene')) score += 25;
+      else if (vType === 'featurette') score += 15;
+      else score += 10;
+
+      // Official trailer bonus
+      if (v.official) score += 30;
+
+      return { key: v.key, score };
+    });
+
+    // Sort highest score first
+    scored.sort((a, b) => b.score - a.score);
+
+    const bestKey = scored[0]?.key || null;
+    trailerCache.set(cacheKey, bestKey);
+    return bestKey;
+  } catch (e) {
+    console.error(`Failed to fetch trailer for ${type} ${id}:`, e);
+    trailerCache.set(cacheKey, null);
+    return null;
+  }
 }
 
 export async function searchContent(rawQuery: string): Promise<Movie[]> {

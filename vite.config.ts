@@ -32,7 +32,7 @@ function tmdbLocalProxy(env: Record<string, string>) {
             /^\/discover\/(movie|tv)$/,
             /^\/search\/(multi|movie|tv)$/,
             /^\/(movie|tv)\/\d+$/,
-            /^\/(movie|tv)\/\d+\/similar$/,
+            /^\/(movie|tv)\/\d+\/(similar|credits|videos|recommendations)$/,
             /^\/genre\/(movie|tv)\/list$/,
             /^\/movie\/\d+\/release_dates$/,
             /^\/tv\/\d+\/content_ratings$/,

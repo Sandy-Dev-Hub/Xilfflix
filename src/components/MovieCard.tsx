@@ -59,7 +59,7 @@ export default function MovieCard({ movie, size = 'md', posterMode = false, flui
         setCardRect(cardRef.current.getBoundingClientRect());
         setHovered(true);
       }
-    }, 300);
+    }, 120);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
