@@ -133,12 +133,12 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
         {/* ── Header ─────────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
           <button
-            onClick={() => navigate(`/${movie.type}/${movie.id}`)}
+            onClick={() => navigate('/')}
             className="flex items-center gap-2 text-xf-muted hover:text-white transition-colors text-sm"
           >
             <ArrowLeft size={16} />
-            <span className="hidden sm:inline">Back to Details</span>
-            <span className="sm:hidden">Back</span>
+            <span className="hidden sm:inline">Back to Home</span>
+            <span className="sm:hidden">Home</span>
           </button>
 
           <div className="flex items-center gap-2">

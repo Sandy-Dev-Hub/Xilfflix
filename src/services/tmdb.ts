@@ -453,7 +453,7 @@ export async function getMovieTrailer(
       return null;
     }
 
-    // Score videos according to native language relevance and trailer type
+    // Score videos according to resolution (high quality priority), native language relevance, and official trailer type
     const keywords = targetLang ? (LANG_KEYWORDS[targetLang] || [targetLang]) : [];
 
     const scored = ytVideos.map((v: any) => {
@@ -461,6 +461,17 @@ export async function getMovieTrailer(
       const name = (v.name || '').toLowerCase();
       const vLang = (v.iso_639_1 || '').toLowerCase();
       const vType = (v.type || '').toLowerCase();
+      const size = typeof v.size === 'number' ? v.size : 0;
+
+      // 1. High Quality Video Resolution Priority (2160p 4K, 1440p 2K, 1080p Full HD, 720p HD)
+      if (size >= 2160) score += 120;
+      else if (size >= 1440) score += 95;
+      else if (size >= 1080) score += 80;
+      else if (size >= 720) score += 40;
+      else if (size > 0 && size < 720) score -= 60; // Penalize low SD resolution
+
+      if (name.includes('4k') || name.includes('uhd') || name.includes('2160p')) score += 50;
+      if (name.includes('1080p') || name.includes('fhd')) score += 30;
 
       const isTargetLang = targetLang && (
         vLang === targetLang ||
@@ -475,17 +486,18 @@ export async function getMovieTrailer(
         if (vLang === 'en' || !vLang) score += 50;
       }
 
-      // Video type priority
-      if (vType === 'trailer' || name.includes('trailer')) score += 70;
-      else if (vType === 'teaser' || name.includes('teaser') || name.includes('glimpse') || name.includes('promo')) score += 45;
-      else if (vType === 'clip' || name.includes('clip') || name.includes('sneak peek') || name.includes('scene')) score += 25;
-      else if (vType === 'featurette') score += 15;
-      else score += 10;
+      // Video type priority (official main trailers are highest quality)
+      if (vType === 'trailer' || name.includes('official trailer') || name.includes('main trailer')) score += 90;
+      else if (name.includes('trailer')) score += 70;
+      else if (vType === 'teaser' || name.includes('teaser') || name.includes('glimpse') || name.includes('promo')) score += 35;
+      else if (vType === 'clip' || name.includes('clip') || name.includes('sneak peek') || name.includes('scene')) score += 15;
+      else if (vType === 'featurette') score += 10;
+      else score += 5;
 
       // Official trailer bonus
-      if (v.official) score += 30;
+      if (v.official) score += 40;
 
-      return { key: v.key, score };
+      return { key: v.key, score, size };
     });
 
     // Sort highest score first

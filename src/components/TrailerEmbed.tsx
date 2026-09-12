@@ -30,41 +30,41 @@ export default function TrailerEmbed({
     }
   }, []);
 
-  // Send mute/unmute and 4K quality commands to YouTube iframe via postMessage
+  const sendCommand = (func: string, args: any = '') => {
+    try {
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func, args }),
+          '*'
+        );
+      }
+    } catch {}
+  };
+
+  const applyHighQuality = () => {
+    // Send highest playback quality commands to YouTube player
+    sendCommand('setPlaybackQuality', 'hd1080');
+    sendCommand('setPlaybackQuality', 'hd2160');
+    sendCommand('setPlaybackQuality', 'highres');
+    sendCommand('setPlaybackQualityRange', ['hd1080', 'highres']);
+  };
+
+  // Send mute/unmute and high quality commands to YouTube iframe via postMessage
   useEffect(() => {
     if (!iframeRef.current?.contentWindow) return;
-    try {
-      const func = muted ? 'mute' : 'unMute';
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func, args: '' }),
-        '*'
-      );
-      // Request 4K resolution (hd2160)
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'setPlaybackQuality', args: ['hd2160'] }),
-        '*'
-      );
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'setPlaybackQualityRange', args: ['hd2160', 'highres'] }),
-        '*'
-      );
-    } catch {
-      // Ignore cross-origin postMessage errors
-    }
+    sendCommand(muted ? 'mute' : 'unMute');
+    applyHighQuality();
   }, [muted, isLoaded]);
 
   // Tab visibility listener: pause when hidden, play when visible
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!iframeRef.current?.contentWindow) return;
-      try {
-        const func = document.visibilityState === 'hidden' ? 'pauseVideo' : 'playVideo';
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func, args: '' }),
-          '*'
-        );
-      } catch {
-        // Ignore
+      if (document.visibilityState === 'hidden') {
+        sendCommand('pauseVideo');
+      } else {
+        sendCommand('playVideo');
+        applyHighQuality();
       }
     };
 
@@ -76,15 +76,12 @@ export default function TrailerEmbed({
     return null;
   }
 
-  // Parameters:
-  // autoplay=1: start automatically
-  // mute=0 / 1: audio setting
-  // controls=0: hide player controls & pause/forward overlays
-  // loop=1 & playlist={key}: seamless looping
-  // enablejsapi=1: allow postMessage commands for mute/unmute, quality and visibility
-  // modestbranding=1, rel=0, playsinline=1, iv_load_policy=3, disablekb=1, vq=hd2160, highres=1, hd=1
+  // Parameters for high quality, auto-playing trailer embed:
+  // - vq=hd1080: request high definition 1080p
+  // - enablejsapi=1: allow postMessage commands for high quality and mute controls
+  // - autoplay=1, mute=1/0, controls=0, loop=1
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const embedUrl = `https://www.youtube.com/embed/${videoKey}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&loop=1&playlist=${videoKey}&enablejsapi=1&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&fs=0&showinfo=0&widget_referrer=${encodeURIComponent(origin)}&origin=${encodeURIComponent(origin)}`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${videoKey}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&loop=1&playlist=${videoKey}&enablejsapi=1&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&fs=0&showinfo=0&vq=hd1080&widget_referrer=${encodeURIComponent(origin)}&origin=${encodeURIComponent(origin)}`;
 
   const sizeClass =
     fitMode === 'hero'
@@ -94,7 +91,6 @@ export default function TrailerEmbed({
   return (
     <div
       className={`absolute inset-0 overflow-hidden pointer-events-none select-none ${className}`}
-      style={{ filter: 'brightness(1.15) contrast(1.05)' }}
       aria-hidden="true"
     >
       <iframe
@@ -108,22 +104,13 @@ export default function TrailerEmbed({
         allow="autoplay; encrypted-media"
         onLoad={() => {
           setIsLoaded(true);
-          try {
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ event: 'command', func: 'setPlaybackQuality', args: ['hd2160'] }),
-              '*'
-            );
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ event: 'command', func: 'setPlaybackQualityRange', args: ['hd2160', 'highres'] }),
-              '*'
-            );
-            if (!muted) {
-              iframeRef.current?.contentWindow?.postMessage(
-                JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
-                '*'
-              );
-            }
-          } catch {}
+          applyHighQuality();
+          if (!muted) {
+            sendCommand('unMute');
+          }
+          // Retry high quality commands as YouTube player state stabilizes
+          setTimeout(applyHighQuality, 250);
+          setTimeout(applyHighQuality, 1000);
           onLoaded?.();
         }}
       />

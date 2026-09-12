@@ -24,7 +24,7 @@ export function makeServers(
   if (mediaType === 'movie') {
     let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server2Url = `https://framextv.tech/embed/${tmdbId}`;
-    let server3Url = `https://player.videasy.to/movie/${tmdbId}?color=E50914`;
+    let server3Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
     let server4Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
     let server2Status: 'online' | 'offline' = 'online';
     let server3Status: 'online' | 'offline' = 'online';
@@ -32,7 +32,6 @@ export function makeServers(
     // Custom overrides for specific movies
     if (tmdbId === '37941') {
       server4Url = `https://vidsrc.wiki/embed/movie/37941`;
-      server3Status = 'offline';
     } else if (tmdbId === '329135') {
       server4Url = `https://vidsrc.wiki/embed/movie/329135`;
     }
@@ -76,7 +75,7 @@ export function makeServers(
     {
       name: 'Server 3 (4K)',
       status: 'online',
-      sourceUrl: `https://player.videasy.to/tv/${tmdbId}/${season}/${episode}?color=E50914`,
+      sourceUrl: `https://fmov.my/embed/tv/${tmdbId}/${season}/${episode}?color=E50914&nextEpisode=true&episodeSelector=true`,
     },
     {
       name: 'Server 4',
