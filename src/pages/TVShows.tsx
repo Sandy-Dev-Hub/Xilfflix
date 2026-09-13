@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
+import PageBackground from '@/components/PageBackground';
 import {
   getDiscoverTVPage,
   getDiscoverTV,
@@ -49,6 +50,7 @@ const LANGUAGE_ROWS = [
 export default function TVShows() {
   const [selectedGenre, setSelectedGenre] = useState<GenreOption | null>(null);
   const [addonRoot, setAddonRoot] = useState<HTMLElement | null>(null);
+  const [activeHeroMovie, setActiveHeroMovie] = useState<Movie | null>(null);
 
   useEffect(() => {
     setAddonRoot(document.getElementById('navbar-addon'));
@@ -73,6 +75,7 @@ export default function TVShows() {
 
   const genreLabel = selectedGenre ? selectedGenre.label : 'All TV Shows';
   const visibleHero = heroShows?.slice(0, 10) ?? [];
+  const bgMovie = activeHeroMovie || visibleHero[0] || null;
 
   return (
     <motion.div
@@ -80,8 +83,10 @@ export default function TVShows() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="min-h-screen bg-xf-bg"
+      className="min-h-screen bg-[#08080a] relative overflow-x-hidden"
     >
+      {/* Cinejoy-style dynamic page background */}
+      <PageBackground movie={bgMovie} />
       {/* Navbar Addon: XILFFLIX > TV Shows [Genres ⌵] */}
       {addonRoot && createPortal(
         <div className="flex items-center gap-1 sm:gap-2 ml-1.5 sm:ml-4">
@@ -93,16 +98,16 @@ export default function TVShows() {
       )}
 
       {/* Hero Section */}
-      <div className="relative">
+      <div className="relative z-10">
         {heroLoading ? (
           <LoadingSkeleton variant="hero" />
         ) : (
-          <Hero movies={visibleHero} />
+          <Hero movies={visibleHero} onActiveMovieChange={setActiveHeroMovie} />
         )}
       </div>
 
-      {/* Home-like TV Rows */}
-      <div className="max-md:mt-4 md:mt-[-40px] relative z-10 flex flex-col gap-10 pb-16">
+      {/* TV Rows — mt-16 md:mt-20 gives gap between hero and first row */}
+      <div className="mt-16 md:mt-20 relative z-10 flex flex-col gap-10 pb-16">
         {language ? (
           /* ── When a specific Language is selected ── */
           <>

@@ -4,11 +4,14 @@ import {
   useCallback,
   useEffect,
 } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Movie } from '@/types/movie';
 import MovieCard from './MovieCard';
 import TopTenCard from './TopTenCard';
+
+// Hover zone width from row edges
+const EDGE_ZONE = 110;
 
 interface MovieRowProps {
   title: string;
@@ -31,7 +34,7 @@ export default function MovieRow({
   fetchMore,
 }: MovieRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -43,7 +46,7 @@ export default function MovieRow({
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(!!fetchMore);
 
-  // Sync movies from parent (initial load)
+  // Sync movies from parent
   useEffect(() => {
     setAllMovies(movies);
   }, [movies]);
@@ -52,28 +55,51 @@ export default function MovieRow({
   const updateScrollState = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 10);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+    const isAtStart = el.scrollLeft <= 10;
+    const isAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 10;
+    setCanScrollLeft(!isAtStart);
+    setCanScrollRight(!isAtEnd);
+    if (isAtStart) setShowLeftArrow(false);
+    if (isAtEnd) setShowRightArrow(false);
   }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollLeft = 0;
+    }
+    updateScrollState();
+    if (!el) return;
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [updateScrollState]);
 
   const scroll = useCallback((dir: 'left' | 'right') => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir === 'right' ? el.clientWidth * 0.8 : -el.clientWidth * 0.8, behavior: 'smooth' });
-    setTimeout(updateScrollState, 400);
+    const scrollAmount = el.clientWidth * 0.75;
+    const target = dir === 'right'
+      ? el.scrollLeft + scrollAmount
+      : Math.max(0, el.scrollLeft - scrollAmount);
+    el.scrollTo({ left: target, behavior: 'smooth' });
+    setTimeout(updateScrollState, 450);
   }, [updateScrollState]);
 
-  // ── Edge-zone arrow visibility ──────────────────────────────────────────────
+  // ── Mouse proximity (live inspection of scroll boundaries) ─────────────────
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const w = rect.width;
-    const edgePct = 0.07; // 7% edge zone
-    setShowLeftArrow(x < w * edgePct && canScrollLeft);
-    setShowRightArrow(x > w * (1 - edgePct) && canScrollRight);
-  }, [canScrollLeft, canScrollRight]);
+    const row = rowRef.current;
+    const el = scrollRef.current;
+    if (!row || !el) return;
+
+    const isAtStart = el.scrollLeft <= 10;
+    const isAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 10;
+    const { left, width } = row.getBoundingClientRect();
+    const x = e.clientX - left;
+
+    setShowLeftArrow(!isAtStart && x <= EDGE_ZONE);
+    setShowRightArrow(!isAtEnd && x >= width - EDGE_ZONE);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     setShowLeftArrow(false);
@@ -95,7 +121,6 @@ export default function MovieRow({
               setHasMore(false);
             } else {
               setAllMovies((prev) => {
-                // Deduplicate by id
                 const existingIds = new Set(prev.map((m) => m.id));
                 return [...prev, ...newMovies.filter((m) => !existingIds.has(m.id))];
               });
@@ -119,49 +144,84 @@ export default function MovieRow({
 
   return (
     <section
-      className={`relative ${className}`}
+      className={`relative select-none ${className}`}
       aria-label={title}
     >
-      {/* Row title */}
-      <h2 className="px-4 sm:px-8 lg:px-12 mb-3 text-white font-display font-bold text-lg sm:text-xl tracking-tight">
+      {/* Row title — flush with page grid */}
+      <h2 className="px-4 sm:px-8 lg:px-12 mb-3.5 text-white font-display font-bold text-lg sm:text-xl tracking-tight">
         {title}
       </h2>
 
       {/* Scroll container wrapper */}
       <div
-        ref={containerRef}
+        ref={rowRef}
         className="relative"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Left fade */}
-        <div
-          className={`hidden md:block absolute left-0 top-0 bottom-4 w-16 z-10 pointer-events-none
-            bg-gradient-to-r from-xf-bg to-transparent transition-opacity duration-200
-            ${canScrollLeft ? 'opacity-100' : 'opacity-0'}`}
-        />
+        {/* Left arrow — centered vertically on posters */}
+        <AnimatePresence>
+          {showLeftArrow && canScrollLeft && (
+            <motion.button
+              key="left-arrow"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => scroll('left')}
+              aria-label="Scroll left"
+              className="
+                absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30
+                w-9 h-9 sm:w-11 sm:h-11
+                flex items-center justify-center
+                cursor-pointer bg-transparent border-0 outline-none
+                text-white hover:scale-120 active:scale-90
+                transition-transform duration-150
+              "
+            >
+              <ChevronLeft
+                className="w-7 h-7 sm:w-8 sm:h-8 text-white stroke-white"
+                style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.95)) drop-shadow(0 0 3px rgba(0,0,0,0.9))' }}
+                strokeWidth={2.8}
+              />
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-        {/* Left arrow — only in edge zone */}
-        {canScrollLeft && (
-          <button
-            onClick={() => scroll('left')}
-            className={`hidden md:flex absolute left-1 top-1/2 -translate-y-5 z-20 w-10 h-10 rounded-full
-              bg-[rgba(20,20,20,0.7)] backdrop-blur-sm text-white border border-white/10
-              items-center justify-center transition-all duration-200
-              hover:bg-[rgba(20,20,20,0.9)] hover:scale-110 shadow-lg
-              ${showLeftArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-            aria-label="Scroll left"
-          >
-            <ChevronLeft size={20} />
-          </button>
-        )}
+        {/* Right arrow — centered vertically on posters */}
+        <AnimatePresence>
+          {showRightArrow && canScrollRight && (
+            <motion.button
+              key="right-arrow"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              onClick={() => scroll('right')}
+              aria-label="Scroll right"
+              className="
+                absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30
+                w-9 h-9 sm:w-11 sm:h-11
+                flex items-center justify-center
+                cursor-pointer bg-transparent border-0 outline-none
+                text-white hover:scale-120 active:scale-90
+                transition-transform duration-150
+              "
+            >
+              <ChevronRight
+                className="w-7 h-7 sm:w-8 sm:h-8 text-white stroke-white"
+                style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.95)) drop-shadow(0 0 3px rgba(0,0,0,0.9))' }}
+                strokeWidth={2.8}
+              />
+            </motion.button>
+          )}
+        </AnimatePresence>
 
-        {/* Cards */}
+        {/* Cards — first card starts exactly beneath heading */}
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
-          className="flex gap-3 overflow-x-auto scrollbar-hide px-4 sm:px-8 lg:px-12 pb-4 pt-1 scroll-smooth"
-          style={{ scrollSnapType: 'x mandatory' }}
+          className="flex gap-4 sm:gap-5 md:gap-6 overflow-x-auto scrollbar-hide py-2 scroll-smooth"
         >
           {allMovies.map((movie, i) => (
             <motion.div
@@ -170,12 +230,14 @@ export default function MovieRow({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.3 }}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+              className={`flex-shrink-0 ${i === 0 ? 'ml-4 sm:ml-8 lg:ml-12' : ''} ${
+                i === allMovies.length - 1 ? 'mr-4 sm:mr-8 lg:mr-12' : ''
+              }`}
             >
               {variant === 'topTen' ? (
                 <TopTenCard movie={movie} rank={i + 1} />
               ) : (
-                <MovieCard movie={movie} />
+                <MovieCard movie={movie} posterMode={true} />
               )}
             </motion.div>
           ))}
@@ -185,35 +247,13 @@ export default function MovieRow({
             <div ref={sentinelRef} className="flex-shrink-0 flex items-center">
               {loadingMore && (
                 <div
-                  className="rounded-md bg-xf-card skeleton flex-shrink-0"
-                  style={{ width: 300, aspectRatio: '16/9' }}
+                  className="rounded-2xl bg-xf-card skeleton flex-shrink-0 mr-4 sm:mr-8 lg:mr-12"
+                  style={{ width: 175, aspectRatio: '2/3' }}
                 />
               )}
             </div>
           )}
         </div>
-
-        {/* Right fade */}
-        <div
-          className={`hidden md:block absolute right-0 top-0 bottom-4 w-16 z-10 pointer-events-none
-            bg-gradient-to-l from-xf-bg to-transparent transition-opacity duration-200
-            ${canScrollRight ? 'opacity-100' : 'opacity-0'}`}
-        />
-
-        {/* Right arrow — only in edge zone */}
-        {canScrollRight && (
-          <button
-            onClick={() => scroll('right')}
-            className={`hidden md:flex absolute right-1 top-1/2 -translate-y-5 z-20 w-10 h-10 rounded-full
-              bg-[rgba(20,20,20,0.7)] backdrop-blur-sm text-white border border-white/10
-              items-center justify-center transition-all duration-200
-              hover:bg-[rgba(20,20,20,0.9)] hover:scale-110 shadow-lg
-              ${showRightArrow ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-            aria-label="Scroll right"
-          >
-            <ChevronRight size={20} />
-          </button>
-        )}
       </div>
     </section>
   );

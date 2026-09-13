@@ -1,7 +1,9 @@
-import { useEffect, useCallback, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import PageBackground from '@/components/PageBackground';
 import Hero from '@/components/Hero';
 import MovieRow from '@/components/MovieRow';
+import ProviderRow from '@/components/ProviderRow';
 import ContinueWatching from '@/components/ContinueWatching';
 import Footer from '@/components/Footer';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -60,11 +62,13 @@ async function fetchAboveTheFoldData() {
 export default function Home() {
   const { data, loading, error } = useTMDB(fetchAboveTheFoldData);
   const { seedDynamicNotifications, profile, myList, continueWatching } = useAppStore();
+  const [activeHeroMovie, setActiveHeroMovie] = useState<Movie | null>(null);
 
-  // Seed dynamic "Now Available" notifications once trending data loads
+  // Seed dynamic "Now Available" notifications once trending data loads & set initial activeHeroMovie
   useEffect(() => {
     if (data?.trending && data.trending.length > 0) {
       seedDynamicNotifications(data.trending);
+      setActiveHeroMovie((prev) => prev || data.trending[0]);
     }
   }, [data?.trending, seedDynamicNotifications]);
 
@@ -129,6 +133,7 @@ export default function Home() {
 
   const { trending, topRatedMovies, topRatedTV } = data;
   const heroMovies = trending.slice(0, 10);
+  const currentMovie = activeHeroMovie || heroMovies[0];
 
   return (
     <motion.div
@@ -136,12 +141,19 @@ export default function Home() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="min-h-screen bg-xf-bg"
+      className="min-h-screen bg-[#08080a] relative overflow-x-hidden"
     >
-      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
-      <Hero movies={heroMovies} />
+      {/* Cinejoy-style dynamic page background */}
+      <PageBackground movie={currentMovie} />
 
-      <div className="max-md:mt-4 md:mt-[-60px] relative z-10 flex flex-col gap-10 pb-4">
+      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
+      <Hero movies={heroMovies} onActiveMovieChange={setActiveHeroMovie} />
+
+      {/* ── Content Rows ── mt-16 md:mt-24 gives gap between hero & first row ── */}
+      <div className="mt-16 md:mt-24 relative z-10 flex flex-col gap-10 md:gap-12 pb-16">
+
+        {/* ── Browse by Provider Row ────────────────────────────────────────── */}
+        <ProviderRow />
 
         {/* ── 1. TV Action & Adventure (preset row) ─────────────────────────── */}
         <PresetRow preset={homeRowPresets[0]} makeFetchMore={makeFetchMore} />

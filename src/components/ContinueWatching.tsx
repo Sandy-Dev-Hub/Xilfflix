@@ -15,14 +15,13 @@ export default function ContinueWatching() {
   if (!entries.length) return null;
 
   return (
-    <section className="px-4 sm:px-8 lg:px-12" aria-label="Continue Watching">
-      <h2 className="mb-3 text-white font-display font-bold text-lg sm:text-xl tracking-tight">
+    <section aria-label="Continue Watching" className="select-none">
+      <h2 className="px-4 sm:px-8 lg:px-12 mb-3.5 text-white font-display font-bold text-lg sm:text-xl tracking-tight">
         Continue Watching
       </h2>
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4">
-        {entries.map(([id, prog]) => {
+      <div className="flex gap-4 sm:gap-5 overflow-x-auto scrollbar-hide py-1">
+        {entries.map(([id, prog], idx) => {
           const movieMeta = prog.movieMeta;
-          // Fallback if missing metadata (from old mock data)
           if (!movieMeta) return null;
           const pct = Math.min((prog.progress / prog.duration) * 100, 100);
 
@@ -31,11 +30,13 @@ export default function ContinueWatching() {
               key={id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative flex-shrink-0 w-[180px] sm:w-[200px] group cursor-pointer"
+              className={`relative flex-shrink-0 w-[150px] sm:w-[175px] md:w-[200px] group cursor-pointer ${
+                idx === 0 ? 'ml-4 sm:ml-8 lg:ml-12' : ''
+              } ${idx === entries.length - 1 ? 'mr-4 sm:mr-8 lg:mr-12' : ''}`}
               onClick={() => navigate(`/watch/${movieMeta.type}/${id}`)}
             >
               {/* Poster */}
-              <div className="relative rounded-lg overflow-hidden aspect-[2/3] bg-xf-card shadow-md">
+              <div className="relative rounded-2xl overflow-hidden aspect-[2/3] bg-xf-card shadow-md">
                 <img
                   src={movieMeta.poster}
                   alt={movieMeta.title}
@@ -51,7 +52,7 @@ export default function ContinueWatching() {
                   />
                 </div>
                 {/* Progress bar */}
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20">
                   <div
                     className="h-full bg-xf-red transition-all duration-300"
                     style={{ width: `${pct}%` }}
@@ -60,7 +61,7 @@ export default function ContinueWatching() {
               </div>
 
               {/* Info */}
-              <div className="mt-2 flex items-start justify-between gap-1">
+              <div className="mt-2 flex items-start justify-between gap-1 px-1">
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-xs font-semibold truncate">{movieMeta.title}</p>
                   <p className="text-xf-subtle text-xs mt-0.5">{Math.round(pct)}% watched</p>
@@ -70,8 +71,8 @@ export default function ContinueWatching() {
                     e.stopPropagation();
                     clearProgress(id);
                   }}
-                  className="p-1 rounded text-xf-subtle hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                  aria-label={`Remove ${movieMeta.title} from continue watching`}
+                  className="p-1 text-xf-muted hover:text-xf-red transition-colors"
+                  aria-label="Remove from Continue Watching"
                 >
                   <Trash2 size={13} />
                 </button>

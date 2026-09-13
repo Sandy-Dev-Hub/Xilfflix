@@ -5,17 +5,19 @@ import { Play, Plus, Check, Info, ChevronLeft, ChevronRight } from 'lucide-react
 import type { Movie } from '@/types/movie';
 import { useAppStore } from '@/store/useAppStore';
 import { getMovieLogo } from '@/services/tmdb';
+import { getGenreIcon } from '@/utils/genreIcons';
 import Badge from './Badge';
 
 interface HeroProps {
   movies: Movie[];
+  onActiveMovieChange?: (movie: Movie) => void;
 }
 
 const prefersReducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export default function Hero({ movies }: HeroProps) {
+export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const navigate = useNavigate();
@@ -26,6 +28,13 @@ export default function Hero({ movies }: HeroProps) {
 
   const movie = movies[current];
   const inList = movie ? isInList(movie.id) : false;
+
+  // Notify parent of active movie
+  useEffect(() => {
+    if (movies[current]) {
+      onActiveMovieChange?.(movies[current]);
+    }
+  }, [current, movies, onActiveMovieChange]);
 
   const [mobileMovies, setMobileMovies] = useState<(Movie & { uniqueId: string })[]>([]);
 
@@ -113,18 +122,10 @@ export default function Hero({ movies }: HeroProps) {
     return `${Math.floor(min / 60)}h ${min % 60}m`;
   };
 
-  // Dot-separated metadata items
-  const metaItems = [
-    movie.genres[0],
-    movie.year > 0 ? String(movie.year) : null,
-    formatRuntime(movie.runtime),
-    movie.ageRating,
-  ].filter(Boolean) as string[];
-
   return (
     <>
       {/* ── Mobile Swipeable Hero ── */}
-      <div className="md:hidden pt-20 pb-4 bg-xf-bg w-full relative z-10">
+      <div className="md:hidden pt-20 pb-4 bg-transparent w-full relative z-10">
         <div 
           ref={mobileScrollRef}
           onScroll={handleMobileScroll}
@@ -171,12 +172,12 @@ export default function Hero({ movies }: HeroProps) {
                     </h1>
                   )}
 
-                  {/* Tags */}
-                  <div className="flex items-center gap-1.5 mb-5 text-xs text-white/90 font-medium drop-shadow-md">
+                  {/* Tags with Dynamic Icons */}
+                  <div className="flex items-center gap-1.5 mb-5 text-xs text-white/90 font-medium drop-shadow-md flex-wrap justify-center">
                     {cardTags.map((tag, i) => (
-                      <span key={tag} className="flex items-center gap-1.5">
-                        {i > 0 && <span className="text-white/50">•</span>}
-                        <span>{tag}</span>
+                      <span key={tag} className="flex items-center gap-1">
+                        {i > 0 && <span className="text-white/50 mr-1">•</span>}
+                        <span>{getGenreIcon(tag)} {tag}</span>
                       </span>
                     ))}
                   </div>
@@ -213,159 +214,143 @@ export default function Hero({ movies }: HeroProps) {
         </div>
       </div>
 
-      {/* ── Desktop Hero ── */}
-      <div className="hidden md:block relative w-full h-screen overflow-hidden bg-xf-bg">
-        {/* Backdrop images with Ken-Burns */}
-        <AnimatePresence initial={false} custom={direction} mode="sync">
-          <motion.div
-            key={movie.id}
-            custom={direction}
-            initial={{ opacity: 0, x: direction * 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction * -60 }}
-            transition={{ duration: 0.7, ease: 'easeInOut' }}
-            className="absolute inset-0"
-          >
-            <img
-              key={`backdrop-${movie.id}`}
-              src={movie.backdrop}
-              alt={movie.title}
-              className={`w-full h-full object-cover object-top ${!prefersReducedMotion ? 'ken-burns' : ''}`}
-              loading="eager"
-            />
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-xf-bg via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent" />
-
+      {/* ── Desktop Hero (Transparent Overlay on top of Unified Page Background) ── */}
+      <div className="hidden md:block relative w-full h-[65vh] min-h-[500px] max-h-[720px] bg-transparent">
         {/* Content */}
-        <div className="relative h-full flex items-center">
+        <div className="relative h-full flex flex-col justify-end pb-8">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 w-full">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={movie.id + '-content'}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="max-w-xl lg:max-w-2xl"
-              >
-                {/* Badges row */}
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  {movie.badges && movie.badges.length > 0 ? (
-                    movie.badges.slice(0, 2).map((b) => (
-                      <Badge key={b} label={b} color="red" size="sm" />
-                    ))
-                  ) : (
-                    <Badge
-                      label={movie.type === 'tv' ? 'TV Series' : 'Movie'}
-                      color="white"
-                      size="sm"
+            <div className="flex items-end justify-between">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={movie.id + '-content'}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  className="max-w-xl lg:max-w-2xl text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)]"
+                >
+                  {/* Title or Logo */}
+                  {logos[movie.id] ? (
+                    <img
+                      src={logos[movie.id]}
+                      alt={movie.title}
+                      className="max-h-[140px] max-w-[450px] w-auto object-contain mb-4 drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] filter"
                     />
+                  ) : (
+                    <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-none mb-3 tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                      {movie.title}
+                    </h1>
                   )}
-                </div>
 
-                {/* Title or Logo */}
-                {logos[movie.id] ? (
-                  <img
-                    src={logos[movie.id]}
-                    alt={movie.title}
-                    className="max-h-[140px] w-auto object-contain mb-6 drop-shadow-2xl filter"
-                  />
-                ) : (
-                  <h1 className="font-display font-black text-4xl sm:text-5xl lg:text-6xl text-white leading-none mb-4 tracking-tight">
-                    {movie.title}
-                  </h1>
-                )}
-
-                {/* Dot-separated metadata */}
-                <div className="flex items-center gap-2 mb-4 text-sm text-xf-muted flex-wrap">
-                  <span className="text-green-400 font-semibold">{movie.rating.toFixed(1)} ★</span>
-                  {metaItems.map((item, i) => (
-                    <span key={item} className="flex items-center gap-2">
-                      {i > 0 && <span className="text-xf-subtle/60">•</span>}
-                      <span>{item}</span>
+                  {/* Clean Metadata Line with Dynamic Themed Genre Icons */}
+                  <div className="flex items-center gap-2.5 mb-3 text-sm font-medium text-white/95 drop-shadow-md flex-wrap">
+                    <span className="flex items-center gap-1 text-amber-300 font-semibold">
+                      ★ {movie.rating.toFixed(1)}/10
                     </span>
-                  ))}
-                </div>
+                    {movie.year > 0 && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-white/40">•</span>
+                        <span>📅 {movie.year}</span>
+                      </span>
+                    )}
+                    {movie.genres[0] && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-white/40">•</span>
+                        <span>{getGenreIcon(movie.genres[0])} {movie.genres[0]}</span>
+                      </span>
+                    )}
+                    {movie.ageRating && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-white/40">•</span>
+                        <span className="px-1.5 py-0.5 bg-white/20 rounded text-xs backdrop-blur-sm">{movie.ageRating}</span>
+                      </span>
+                    )}
+                    {formatRuntime(movie.runtime) && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-white/40">•</span>
+                        <span>⏱️ {formatRuntime(movie.runtime)}</span>
+                      </span>
+                    )}
+                  </div>
 
-                {/* Description */}
-                <p className="text-xf-muted text-sm sm:text-base leading-relaxed line-clamp-3 mb-6">
-                  {movie.description}
-                </p>
+                  {/* Description */}
+                  <p className="text-white/95 text-sm sm:text-base leading-relaxed line-clamp-3 mb-6 max-w-xl drop-shadow-[0_1px_8px_rgba(0,0,0,0.95)] font-normal">
+                    {movie.description}
+                  </p>
 
-                {/* Buttons */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => navigate(`/watch/${movie.type}/${movie.id}`)}
-                    className="flex items-center gap-2 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-all duration-200 shadow-lg shadow-black/30"
-                    id={`hero-play-${movie.id}`}
-                  >
-                    <Play size={18} fill="black" />
-                    Play
-                  </motion.button>
+                  {/* Buttons matching Image 1: [ ▶ Play ] [ + | ⓘ ] */}
+                  <div className="flex items-center gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => navigate(`/watch/${movie.type}/${movie.id}`)}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-white text-black font-bold rounded-full hover:bg-white/90 transition-all duration-200 shadow-xl"
+                      id={`hero-play-${movie.id}`}
+                    >
+                      <Play size={18} fill="black" />
+                      Play
+                    </motion.button>
 
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={toggleList}
-                    className="flex items-center gap-2 px-6 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-all duration-200 backdrop-blur-sm border border-white/20"
-                    id={`hero-list-${movie.id}`}
-                  >
-                    {inList ? <Check size={18} /> : <Plus size={18} />}
-                    {inList ? 'In My List' : 'My List'}
-                  </motion.button>
+                    {/* Frosted Capsule with Connected + and ⓘ */}
+                    <div className="flex items-center rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md border border-white/20 px-1 py-0.5 transition-colors shadow-lg">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={toggleList}
+                        className="px-3.5 py-2 text-white hover:text-white transition-colors border-r border-white/25 flex items-center justify-center"
+                        title={inList ? 'In My List' : 'Add to My List'}
+                        id={`hero-list-${movie.id}`}
+                      >
+                        {inList ? <Check size={18} strokeWidth={2.5} /> : <Plus size={18} strokeWidth={2.5} />}
+                      </motion.button>
 
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => navigate(`/${movie.type}/${movie.id}`)}
-                    className="flex items-center gap-2 px-5 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all duration-200 backdrop-blur-sm border border-white/10"
-                    aria-label="More info"
-                  >
-                    <Info size={18} />
-                    <span className="hidden sm:inline text-sm font-medium">More Info</span>
-                  </motion.button>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => navigate(`/${movie.type}/${movie.id}`)}
+                        className="px-3.5 py-2 text-white hover:text-white transition-colors flex items-center justify-center"
+                        title="More Info"
+                        aria-label="More info"
+                      >
+                        <Info size={18} strokeWidth={2.5} />
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Slide indicators on the right matching Image 1: — • • • • • • • • */}
+              <div className="flex items-center gap-2 pb-3">
+                {movies.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => goTo(i)}
+                    className={`transition-all duration-300 rounded-full ${
+                      i === current ? 'w-8 h-1 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
+                    }`}
+                    aria-label={`Go to slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Prev/Next controls */}
         <button
           onClick={prev}
-          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors z-10 backdrop-blur-sm"
+          className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/30 text-white/80 hover:text-white hover:bg-black/60 transition-colors z-10 backdrop-blur-sm"
           aria-label="Previous feature"
         >
           <ChevronLeft size={22} />
         </button>
         <button
           onClick={next}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 text-white hover:bg-black/70 transition-colors z-10 backdrop-blur-sm"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/30 text-white/80 hover:text-white hover:bg-black/60 transition-colors z-10 backdrop-blur-sm"
           aria-label="Next feature"
         >
           <ChevronRight size={22} />
         </button>
-
-        {/* Dot indicators */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-          {movies.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === current ? 'w-8 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/60'
-              }`}
-              aria-label={`Go to slide ${i + 1}`}
-            />
-          ))}
-        </div>
       </div>
     </>
   );

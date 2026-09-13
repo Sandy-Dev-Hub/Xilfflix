@@ -643,3 +643,96 @@ export async function getPresetPage(
   return result;
 }
 
+export interface ProviderQueryParams {
+  providerId: number;
+  mediaType?: 'movie' | 'tv' | 'all';
+  genreId?: number;
+  sortBy?: string;
+  page?: number;
+}
+
+/**
+ * Discovers content available on specific streaming providers (e.g., Netflix, Disney+, Prime, Max)
+ * Supports filtering by movie/tv/all, genres, sort orders, and page number.
+ */
+export async function getProviderContentPage({
+  providerId,
+  mediaType = 'all',
+  genreId,
+  sortBy = 'popularity.desc',
+  page = 1,
+}: ProviderQueryParams): Promise<{ movies: Movie[]; totalPages: number }> {
+  const cacheKey = `provider-content-${providerId}-${mediaType}-${genreId ?? 'all'}-${sortBy}-${page}`;
+  if (pageCache.has(cacheKey)) return pageCache.get(cacheKey)!;
+
+  if (mediaType === 'all') {
+    const [moviesRes, tvRes] = await Promise.allSettled([
+      fetchTMDB('/discover/movie', {
+        with_watch_providers: String(providerId),
+        watch_region: 'US',
+        sort_by: sortBy,
+        page: String(page),
+        ...(genreId ? { with_genres: String(genreId) } : {}),
+      }),
+      fetchTMDB('/discover/tv', {
+        with_watch_providers: String(providerId),
+        watch_region: 'US',
+        sort_by: sortBy,
+        page: String(page),
+        ...(genreId ? { with_genres: resolveTVGenreId(genreId) || String(genreId) } : {}),
+      }),
+    ]);
+
+    const moviesList =
+      moviesRes.status === 'fulfilled' && moviesRes.value?.results
+        ? moviesRes.value.results.map((i: any) => normalizeTMDB(i, 'movie'))
+        : [];
+    const tvList =
+      tvRes.status === 'fulfilled' && tvRes.value?.results
+        ? tvRes.value.results.map((i: any) => normalizeTMDB(i, 'tv'))
+        : [];
+
+    const combined = [...moviesList, ...tvList].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+    const seen = new Set<string>();
+    const unique = combined.filter((m) => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
+
+    const maxPages = Math.max(
+      moviesRes.status === 'fulfilled' ? (moviesRes.value.total_pages || 1) : 1,
+      tvRes.status === 'fulfilled' ? (tvRes.value.total_pages || 1) : 1
+    );
+
+    const result = { movies: unique, totalPages: maxPages };
+    pageCache.set(cacheKey, result);
+    return result;
+  }
+
+  const path = `/discover/${mediaType}`;
+  const params: Record<string, string> = {
+    with_watch_providers: String(providerId),
+    watch_region: 'US',
+    sort_by: sortBy,
+    page: String(page),
+  };
+  if (genreId) {
+    if (mediaType === 'tv') {
+      const resolved = resolveTVGenreId(genreId);
+      if (resolved) params.with_genres = resolved;
+    } else {
+      params.with_genres = String(genreId);
+    }
+  }
+
+  const data = await fetchTMDB(path, params);
+  const result = {
+    movies: (data.results ?? []).map((item: any) => normalizeTMDB(item, mediaType)),
+    totalPages: data.total_pages ?? 1,
+  };
+  pageCache.set(cacheKey, result);
+  return result;
+}
+

@@ -199,9 +199,8 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
               src={activeServer?.sourceUrl}
               title={`${movie.title} — ${activeServer?.name}`}
               className="w-full h-full aspect-video border-0"
-              allowFullScreen
-              sandbox={serverIdx === 0 ? "allow-same-origin allow-scripts allow-presentation" : undefined}
-              allow="autoplay; fullscreen; picture-in-picture"
+              sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-presentation"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               onError={() => setIframeError(true)}
             />
           )}

@@ -1,9 +1,11 @@
 import type { Server } from '@/types/movie';
 
 /**
- * Builds the two real embed servers for a given TMDB ID.
- * For movies: vidsrc.wiki and vidsrc.sbs movie embed URLs.
- * For TV: vidsrc.wiki and vidsrc.sbs TV embed URLs (season/episode appended at Watch time).
+ * Builds the embed servers for a given TMDB ID.
+ * Server 1: Nxsha (Multi-Lang)
+ * Server 2: FramexTV (2K)
+ * Server 3: VidCore (4K / VidCore Player)
+ * Server 4: VidSrc
  */
 export function makeServers(
   tmdbId?: string,
@@ -16,7 +18,7 @@ export function makeServers(
     return [
       { name: 'Server 1 (Multi-Lang)', status: 'online', sourceUrl: '' },
       { name: 'Server 2 (2k)', status: 'online', sourceUrl: '' },
-      { name: 'Server 3 (4K)', status: 'online', sourceUrl: '' },
+      { name: 'Server 3 (VidCore)', status: 'online', sourceUrl: '' },
       { name: 'Server 4', status: 'online', sourceUrl: '' },
     ];
   }
@@ -24,12 +26,12 @@ export function makeServers(
   if (mediaType === 'movie') {
     let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server2Url = `https://framextv.tech/embed/${tmdbId}`;
-    let server3Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
+    let server3Url = `https://vidcore.org/embed/movie/${tmdbId}?autoplay=true&theme=E50914`;
     let server4Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
     let server2Status: 'online' | 'offline' = 'online';
     let server3Status: 'online' | 'offline' = 'online';
     
-    // Custom overrides for specific movies
+    // Custom overrides for specific movies if needed
     if (tmdbId === '37941') {
       server4Url = `https://vidsrc.wiki/embed/movie/37941`;
     } else if (tmdbId === '329135') {
@@ -43,12 +45,12 @@ export function makeServers(
         sourceUrl: server1Url,
       },
       {
-        name: 'Server 2 (2k)',
+        name: 'Server 2',
         status: server2Status,
         sourceUrl: server2Url,
       },
       {
-        name: 'Server 3 (4K)',
+        name: 'Server 3',
         status: server3Status,
         sourceUrl: server3Url,
       },
@@ -68,14 +70,14 @@ export function makeServers(
       sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 2 (2k)',
+      name: 'Server 2',
       status: 'online',
       sourceUrl: `https://framextv.tech/embed/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 3 (4K)',
+      name: 'Server 3',
       status: 'online',
-      sourceUrl: `https://fmov.my/embed/tv/${tmdbId}/${season}/${episode}?color=E50914&nextEpisode=true&episodeSelector=true`,
+      sourceUrl: `https://vidcore.org/embed/tv/${tmdbId}/${season}/${episode}?autoplay=true&theme=E50914`,
     },
     {
       name: 'Server 4',

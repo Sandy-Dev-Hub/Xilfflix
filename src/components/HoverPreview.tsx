@@ -8,6 +8,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { getMovieTrailer } from '@/services/tmdb';
 import TrailerEmbed from './TrailerEmbed';
 import Badge from './Badge';
+import { getGenreIcon } from '@/utils/genreIcons';
 
 interface HoverPreviewProps {
   movie: Movie;
@@ -258,12 +259,26 @@ export default function HoverPreview({
           )}
         </div>
 
-        {/* Mood tags */}
-        {movie.tags && movie.tags.length > 0 && (
-          <p className="text-white text-sm font-medium leading-tight">
-            {movie.tags.slice(0, 3).join(' • ')}
+        {/* Mood / Genre tags with Themed Icons */}
+        {movie.genres && movie.genres.length > 0 ? (
+          <p className="text-white text-sm font-medium leading-tight flex items-center gap-1.5 flex-wrap">
+            {movie.genres.slice(0, 3).map((g, idx) => (
+              <span key={g} className="flex items-center gap-1">
+                {idx > 0 && <span className="text-white/40 mr-1">•</span>}
+                <span>{getGenreIcon(g)} {g}</span>
+              </span>
+            ))}
           </p>
-        )}
+        ) : movie.tags && movie.tags.length > 0 ? (
+          <p className="text-white text-sm font-medium leading-tight flex items-center gap-1.5 flex-wrap">
+            {movie.tags.slice(0, 3).map((t, idx) => (
+              <span key={t} className="flex items-center gap-1">
+                {idx > 0 && <span className="text-white/40 mr-1">•</span>}
+                <span>{getGenreIcon(t)} {t}</span>
+              </span>
+            ))}
+          </p>
+        ) : null}
       </div>
     </motion.div>
   );

@@ -316,9 +316,8 @@ export default function WatchParty() {
                     src={activeServer?.sourceUrl}
                     title="Watch Party Player"
                     className="w-full h-full border-0"
-                    allowFullScreen
-                    sandbox={serverIdx === 0 ? "allow-same-origin allow-scripts allow-presentation" : undefined}
-                    allow="autoplay; fullscreen; picture-in-picture"
+                    sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-presentation"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
                     onError={() => setIframeError(true)}
                   />
                 )}
