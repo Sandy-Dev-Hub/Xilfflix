@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import PageBackground from '@/components/PageBackground';
 import Hero from '@/components/Hero';
+import AmbientBackground from '@/components/AmbientBackground';
 import MovieRow from '@/components/MovieRow';
 import ProviderRow from '@/components/ProviderRow';
 import ContinueWatching from '@/components/ContinueWatching';
@@ -133,7 +133,6 @@ export default function Home() {
 
   const { trending, topRatedMovies, topRatedTV } = data;
   const heroMovies = trending.slice(0, 10);
-  const currentMovie = activeHeroMovie || heroMovies[0];
 
   return (
     <motion.div
@@ -141,16 +140,16 @@ export default function Home() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="min-h-screen bg-[#08080a] relative overflow-x-hidden"
+      className="min-h-screen bg-transparent relative overflow-x-hidden"
     >
-      {/* Cinejoy-style dynamic page background */}
-      <PageBackground movie={currentMovie} />
+      {/* Ambient fixed colour wash — blurred, behind entire page */}
+      <AmbientBackground movie={activeHeroMovie} />
 
-      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
-      <Hero movies={heroMovies} onActiveMovieChange={setActiveHeroMovie} />
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <Hero movies={heroMovies} onActiveMovieChange={setActiveHeroMovie} activeMovie={activeHeroMovie} />
 
-      {/* ── Content Rows ── mt-16 md:mt-24 gives gap between hero & first row ── */}
-      <div className="mt-16 md:mt-24 relative z-10 flex flex-col gap-10 md:gap-12 pb-16">
+      {/* ── Content Rows ── positive gap on mobile, pulled up on desktop ── */}
+      <div className="mt-4 md:-mt-16 relative z-10 flex flex-col gap-10 md:gap-12 pb-16">
 
         {/* ── Browse by Provider Row ────────────────────────────────────────── */}
         <ProviderRow />

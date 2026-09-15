@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Users, MessageSquare, AlertCircle,
-  RefreshCw, PanelRightClose, PanelRightOpen, Maximize
+  RefreshCw, PanelRightClose, PanelRightOpen, Maximize, ShieldCheck
 } from 'lucide-react';
 import { useRoomStore } from '@/store/useRoomStore';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -316,8 +316,10 @@ export default function WatchParty() {
                     src={activeServer?.sourceUrl}
                     title="Watch Party Player"
                     className="w-full h-full border-0"
-                    sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-presentation"
-                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; web-share"
+                    sandbox={serverIdx === 0 ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation"}
                     onError={() => setIframeError(true)}
                   />
                 )}
@@ -357,6 +359,10 @@ export default function WatchParty() {
                     {s.name}
                   </button>
                 ))}
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 ml-1">
+                  <ShieldCheck size={12} />
+                  Ad Blocker Active
+                </span>
               </div>
 
               {/* TV Episodes (if tv) */}

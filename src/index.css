@@ -15,6 +15,14 @@
 
   html {
     scroll-behavior: smooth;
+    /* Hide scrollbar track on all browsers while keeping scroll functionality */
+    overflow-y: scroll;
+    scrollbar-width: none;       /* Firefox */
+    -ms-overflow-style: none;    /* IE / Edge legacy */
+  }
+
+  html::-webkit-scrollbar {
+    display: none;               /* Chrome / Safari / Edge Chromium */
   }
 
   body {
@@ -22,6 +30,8 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    /* Explicit base so transparent page wrappers see a dark canvas */
+    background-color: #0a0a0a;
   }
 
   /* Focus-visible ring for keyboard navigation */

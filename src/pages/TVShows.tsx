@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import PageBackground from '@/components/PageBackground';
+import AmbientBackground from '@/components/AmbientBackground';
 import {
   getDiscoverTVPage,
   getDiscoverTV,
@@ -83,10 +83,11 @@ export default function TVShows() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="min-h-screen bg-[#08080a] relative overflow-x-hidden"
+      className="min-h-screen bg-transparent relative overflow-x-hidden"
     >
-      {/* Cinejoy-style dynamic page background */}
-      <PageBackground movie={bgMovie} />
+      {/* Ambient fixed colour wash — blurred, behind entire page */}
+      <AmbientBackground movie={activeHeroMovie} />
+
       {/* Navbar Addon: XILFFLIX > TV Shows [Genres ⌵] */}
       {addonRoot && createPortal(
         <div className="flex items-center gap-1 sm:gap-2 ml-1.5 sm:ml-4">
@@ -102,7 +103,7 @@ export default function TVShows() {
         {heroLoading ? (
           <LoadingSkeleton variant="hero" />
         ) : (
-          <Hero movies={visibleHero} onActiveMovieChange={setActiveHeroMovie} />
+          <Hero movies={visibleHero} onActiveMovieChange={setActiveHeroMovie} activeMovie={activeHeroMovie} />
         )}
       </div>
 

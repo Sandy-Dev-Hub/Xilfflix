@@ -2,9 +2,9 @@ import type { Server } from '@/types/movie';
 
 /**
  * Builds the embed servers for a given TMDB ID.
- * Server 1: Nxsha (Multi-Lang)
- * Server 2: FramexTV (2K)
- * Server 3: VidCore (4K / VidCore Player)
+ * Server 1: VidLink (Fast HD)
+ * Server 2: Nxsha (Multi-Lang)
+ * Server 3: VixSrc
  * Server 4: VidSrc
  */
 export function makeServers(
@@ -16,17 +16,17 @@ export function makeServers(
   if (!tmdbId) {
     // Fallback while ID is not yet known (e.g. before TMDB fetch completes)
     return [
-      { name: 'Server 1 (Multi-Lang)', status: 'online', sourceUrl: '' },
-      { name: 'Server 2 (2k)', status: 'online', sourceUrl: '' },
-      { name: 'Server 3 (VidCore)', status: 'online', sourceUrl: '' },
+      { name: 'Server 1', status: 'online', sourceUrl: '' },
+      { name: 'Server 2 (Multi-Lang)', status: 'online', sourceUrl: '' },
+      { name: 'Server 3', status: 'online', sourceUrl: '' },
       { name: 'Server 4', status: 'online', sourceUrl: '' },
     ];
   }
 
   if (mediaType === 'movie') {
-    let server1Url = `https://nxsha.space/embed/movie/${tmdbId}`;
-    let server2Url = `https://framextv.tech/embed/${tmdbId}`;
-    let server3Url = `https://vidcore.org/embed/movie/${tmdbId}?autoplay=true&theme=E50914`;
+    let server1Url = `https://vidlink.pro/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
+    let server2Url = `https://nxsha.space/embed/movie/${tmdbId}`;
+    let server3Url = `https://vixsrc.to/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
     let server4Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
     let server2Status: 'online' | 'offline' = 'online';
     let server3Status: 'online' | 'offline' = 'online';
@@ -40,12 +40,12 @@ export function makeServers(
 
     return [
       {
-        name: 'Server 1 (Multi-Lang)',
+        name: 'Server 1',
         status: 'online',
         sourceUrl: server1Url,
       },
       {
-        name: 'Server 2',
+        name: 'Server 2 (Multi-Lang)',
         status: server2Status,
         sourceUrl: server2Url,
       },
@@ -65,19 +65,19 @@ export function makeServers(
   // TV Series
   return [
     {
-      name: 'Server 1 (Multi-Lang)',
+      name: 'Server 1',
+      status: 'online',
+      sourceUrl: `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?primaryColor=E50914&autoplay=true`,
+    },
+    {
+      name: 'Server 2 (Multi-Lang)',
       status: 'online',
       sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 2',
-      status: 'online',
-      sourceUrl: `https://framextv.tech/embed/${tmdbId}/${season}/${episode}`,
-    },
-    {
       name: 'Server 3',
       status: 'online',
-      sourceUrl: `https://vidcore.org/embed/tv/${tmdbId}/${season}/${episode}?autoplay=true&theme=E50914`,
+      sourceUrl: `https://vixsrc.to/tv/${tmdbId}/${season}/${episode}?primaryColor=E50914&autoplay=true`,
     },
     {
       name: 'Server 4',

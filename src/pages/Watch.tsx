@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Info, Tv2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Info, Tv2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import { getMovieDetails, getTVSeason } from '@/services/tmdb';
 import { useTMDB } from '@/hooks/useTMDB';
 import { useAppStore } from '@/store/useAppStore';
@@ -199,8 +199,10 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
               src={activeServer?.sourceUrl}
               title={`${movie.title} — ${activeServer?.name}`}
               className="w-full h-full aspect-video border-0"
-              sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-presentation"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; web-share"
+              sandbox={serverIdx === 0 ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation"}
               onError={() => setIframeError(true)}
             />
           )}
@@ -223,9 +225,15 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
 
         {/* ── Server Switcher ─────────────────────────────────────────────────── */}
         <div className="mb-6">
-          <p className="text-xf-subtle text-xs font-semibold uppercase tracking-wider mb-2">
-            Servers
-          </p>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xf-subtle text-xs font-semibold uppercase tracking-wider">
+              Servers
+            </p>
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <ShieldCheck size={13} />
+              Ad Blocker Active
+            </span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {servers.map((server, i) => (
               <button
@@ -254,7 +262,7 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
             ))}
           </div>
           <p className="text-xf-subtle text-xs mt-2">
-            If video doesn't load, switch to another server. Both servers stream the same content.
+            All servers stream high quality with ad protection enabled. If video doesn't load, switch to another server.
           </p>
         </div>
 

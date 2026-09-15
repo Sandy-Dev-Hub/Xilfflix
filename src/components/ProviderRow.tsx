@@ -182,12 +182,6 @@ export default function ProviderRow({
                     backgroundColor: provider.bgColor,
                     boxShadow: '0 4px 14px rgba(0,0,0,0.6)',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 10px 28px ${provider.glowColor}`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,0,0,0.6)';
-                  }}
                 >
                   <img
                     src={`${TMDB_LOGO_BASE}${provider.logoPath}`}

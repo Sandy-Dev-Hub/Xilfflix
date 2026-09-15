@@ -7,17 +7,20 @@ import { useAppStore } from '@/store/useAppStore';
 import { getMovieLogo } from '@/services/tmdb';
 import { getGenreIcon } from '@/utils/genreIcons';
 import Badge from './Badge';
+import PageBackground from './PageBackground';
 
 interface HeroProps {
   movies: Movie[];
   onActiveMovieChange?: (movie: Movie) => void;
+  /** Active movie to drive the hero backdrop. If omitted, derived from internal state. */
+  activeMovie?: Movie | null;
 }
 
 const prefersReducedMotion =
   typeof window !== 'undefined' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
+export default function Hero({ movies, onActiveMovieChange, activeMovie: activeMovieProp }: HeroProps) {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const navigate = useNavigate();
@@ -27,6 +30,8 @@ export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
   const logosFetched = useRef(false);
 
   const movie = movies[current];
+  // Use the externally tracked active movie if provided, else fall back to current slide
+  const bgMovie = activeMovieProp !== undefined ? activeMovieProp : movie;
   const inList = movie ? isInList(movie.id) : false;
 
   // Notify parent of active movie
@@ -88,10 +93,10 @@ export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
   const next = useCallback(() => goTo((current + 1) % movies.length), [current, goTo, movies.length]);
   const prev = useCallback(() => goTo((current - 1 + movies.length) % movies.length), [current, goTo, movies.length]);
 
-  // Desktop Auto-cycle every 3 seconds
+  // Desktop Auto-cycle every 4 seconds
   useEffect(() => {
     if (movies.length === 0) return;
-    const id = setInterval(next, 3000);
+    const id = setInterval(next, 4000);
     return () => clearInterval(id);
   }, [next, movies.length]);
 
@@ -150,62 +155,95 @@ export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
                 />
                 
                 {/* Bottom Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
-
-                {/* XILFFLIX Watermark (Optional) */}
-                <span className="absolute top-3 left-3 font-display font-black text-xs tracking-tighter text-white/70 shadow-black drop-shadow-md z-10">
-                  <span className="text-xf-red">X</span>ILFFLIX
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 via-50% to-transparent pointer-events-none" />
 
                 {/* Content Overlay */}
-                <div className="absolute inset-x-0 bottom-0 p-5 flex flex-col items-center">
+                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5 flex flex-col items-center text-center">
                   {/* Title or Logo */}
                   {logos[m.id] ? (
                     <img
                       src={logos[m.id]}
                       alt={m.title}
-                      className="max-h-[80px] max-w-[90%] w-auto object-contain mb-3 drop-shadow-2xl filter"
+                      className="max-h-[60px] sm:max-h-[75px] max-w-[85%] w-auto object-contain mb-2 drop-shadow-2xl filter"
                     />
                   ) : (
-                    <h1 className="font-display font-black text-2xl text-white text-center leading-none mb-3 tracking-tight drop-shadow-lg">
+                    <h1 className="font-display font-black text-2xl sm:text-3xl text-white text-center leading-tight mb-2 tracking-tight drop-shadow-lg">
                       {m.title}
                     </h1>
                   )}
 
-                  {/* Tags with Dynamic Icons */}
-                  <div className="flex items-center gap-1.5 mb-5 text-xs text-white/90 font-medium drop-shadow-md flex-wrap justify-center">
-                    {cardTags.map((tag, i) => (
-                      <span key={tag} className="flex items-center gap-1">
-                        {i > 0 && <span className="text-white/50 mr-1">•</span>}
-                        <span>{getGenreIcon(tag)} {tag}</span>
+                  {/* Metadata line: ★ Rating • 📅 Year */}
+                  <div className="flex items-center justify-center gap-2 mb-1 text-xs text-white/95 font-medium drop-shadow-md">
+                    {m.rating > 0 && (
+                      <span className="flex items-center gap-1 text-white font-semibold">
+                        ★ {m.rating.toFixed(1)}/10
                       </span>
-                    ))}
+                    )}
+                    {m.year > 0 && (
+                      <>
+                        <span className="text-white/40">•</span>
+                        <span className="flex items-center gap-1">
+                          📅 {m.year}
+                        </span>
+                      </>
+                    )}
                   </div>
 
-                  {/* Buttons */}
-                  <div className="w-full flex items-center gap-3">
+                  {/* Genre / Tag */}
+                  {m.genres[0] && (
+                    <div className="flex items-center justify-center gap-1.5 mb-2 text-xs text-white/90 font-medium drop-shadow-md">
+                      <span>{getGenreIcon(m.genres[0])}</span>
+                      <span>{m.genres[0]}</span>
+                    </div>
+                  )}
+
+                  {/* Description Overview */}
+                  {m.description && (
+                    <p className="text-white/90 text-xs sm:text-sm leading-relaxed line-clamp-2 mb-3.5 max-w-[92%] drop-shadow-md font-normal">
+                      {m.description}
+                    </p>
+                  )}
+
+                  {/* Buttons matching Image 2: [ ▶ Play ] [ + | ⓘ ] */}
+                  <div className="w-full flex items-center gap-2.5 px-1">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/watch/${m.type}/${m.id}`);
                       }}
-                      className="flex-1 flex justify-center items-center gap-2 py-3 bg-white text-black font-semibold rounded shadow-lg hover:bg-white/90 transition-colors"
+                      className="flex-1 flex justify-center items-center gap-2 py-2.5 bg-white text-black font-bold rounded-full shadow-lg hover:bg-white/90 transition-colors text-sm"
                     >
-                      <Play size={18} fill="black" />
+                      <Play size={16} fill="black" />
                       Play
                     </button>
                     
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (isAdded) removeFromList(m.id);
-                        else addToList(m);
-                      }}
-                      className="flex-1 flex justify-center items-center gap-2 py-3 bg-[#2A2A2A]/50 text-white font-semibold rounded backdrop-blur-md border border-white/20 shadow-lg hover:bg-[#2A2A2A]/80 transition-colors"
-                    >
-                      {isAdded ? <Check size={18} /> : <Plus size={18} />}
-                      My List
-                    </button>
+                    {/* Connected Frosted Capsule [ + | ⓘ ] */}
+                    <div className="flex-1 flex items-center justify-around rounded-full bg-[#2A2A2A]/70 backdrop-blur-md border border-white/20 py-0.5 px-1 shadow-lg">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isAdded) removeFromList(m.id);
+                          else addToList(m);
+                        }}
+                        className="flex-1 py-2 text-white hover:text-white transition-colors flex items-center justify-center border-r border-white/20"
+                        title={isAdded ? 'In My List' : 'Add to My List'}
+                        aria-label="Add to My List"
+                      >
+                        {isAdded ? <Check size={18} strokeWidth={2.5} /> : <Plus size={18} strokeWidth={2.5} />}
+                      </button>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/${m.type}/${m.id}`);
+                        }}
+                        className="flex-1 py-2 text-white hover:text-white transition-colors flex items-center justify-center"
+                        title="More Info"
+                        aria-label="More info"
+                      >
+                        <Info size={18} strokeWidth={2.5} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -214,10 +252,13 @@ export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
         </div>
       </div>
 
-      {/* ── Desktop Hero (Transparent Overlay on top of Unified Page Background) ── */}
-      <div className="hidden md:block relative w-full h-[65vh] min-h-[500px] max-h-[720px] bg-transparent">
+      {/* ── Desktop Hero ─────────────────────────────────────────────────────── */}
+      {/* overflow-hidden clips PageBackground strictly to this container's bounds */}
+      <div className="hidden md:block relative z-[1] w-full h-screen min-h-[560px] overflow-hidden">
+        {/* Backdrop lives inside here — scrolls away with the hero, never bleeds below */}
+        <PageBackground movie={bgMovie ?? null} />
         {/* Content */}
-        <div className="relative h-full flex flex-col justify-end pb-8">
+        <div className="relative h-full flex flex-col justify-center">
           <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 w-full">
             <div className="flex items-end justify-between">
               <AnimatePresence mode="wait">
@@ -336,21 +377,6 @@ export default function Hero({ movies, onActiveMovieChange }: HeroProps) {
           </div>
         </div>
 
-        {/* Prev/Next controls */}
-        <button
-          onClick={prev}
-          className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/30 text-white/80 hover:text-white hover:bg-black/60 transition-colors z-10 backdrop-blur-sm"
-          aria-label="Previous feature"
-        >
-          <ChevronLeft size={22} />
-        </button>
-        <button
-          onClick={next}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/30 text-white/80 hover:text-white hover:bg-black/60 transition-colors z-10 backdrop-blur-sm"
-          aria-label="Next feature"
-        >
-          <ChevronRight size={22} />
-        </button>
       </div>
     </>
   );

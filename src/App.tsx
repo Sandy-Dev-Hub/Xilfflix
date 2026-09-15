@@ -7,6 +7,7 @@ import SearchOverlay from '@/components/SearchOverlay';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
 import NotFound from '@/components/NotFound';
 import FloatingNav from '@/components/ui/floating-nav';
+import ScrollToTopButton from '@/components/ScrollToTopButton';
 import { useAuthStore } from '@/store/useAuthStore';
 
 // Lazy-loaded pages
@@ -57,7 +58,7 @@ export default function App() {
                    location.pathname.startsWith('/tv/');
 
   return (
-    <div className="min-h-screen bg-xf-bg text-xf-text">
+    <div className="min-h-screen bg-transparent text-xf-text">
       <ScrollToTop />
       {!hideNavs && <Navbar />}
       <SearchOverlay />
@@ -84,6 +85,7 @@ export default function App() {
         </Suspense>
       </AnimatePresence>
       {!hideNavs && <FloatingNav />}
+      <ScrollToTopButton />
       <Analytics />
     </div>
   );

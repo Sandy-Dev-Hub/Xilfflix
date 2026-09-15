@@ -1,4 +1,5 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { useRef, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Movie } from '@/types/movie';
 
 interface PageBackgroundProps {
@@ -6,90 +7,79 @@ interface PageBackgroundProps {
 }
 
 /**
- * Cinejoy-style unified dynamic background.
+ * Hero-scoped crisp backdrop — rendered inside the hero container
+ * (position: relative; z-[1]; overflow: hidden).
  *
- * Layer stack (bottom → top):
- *  1. Dark base (#08080a) — set on the page wrapper.
- *  2. Blurred ambient poster colour glow — full-page tint from the movie backdrop.
- *  3. Crystal-clear crisp backdrop — covers the hero + first content row (85 vh).
- *     Masked away softly at the bottom so it dissolves into the ambient glow.
- *  4. Directional readability gradients inside the crisp layer.
+ * The bottom of the hero image dissolves into the fixed aurora layer
+ * USING A CSS MASK, not a dark gradient overlay. This is the key difference:
+ *   - mask-image fade  → image alpha goes to 0, aurora colour shows through
+ *   - dark gradient    → paints black on top, kills colour, creates dead zone
+ *
+ * Layer stack:
+ *  1. Sharp image inside mask-image wrapper   → fades bottom via alpha mask
+ *  2. Left vignette (separate, not masked)    → title/text readability only
+ *  3. Top vignette  (separate, not masked)    → navbar area blend
+ *
+ * Nothing here fades to black. The aurora (AmbientBackground) provides the
+ * colour wash wherever the mask makes the hero image transparent.
  */
 export default function PageBackground({ movie }: PageBackgroundProps) {
+  const [readyId, setReadyId] = useState<string | null>(null);
+  const imgCache = useRef<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!movie) return;
+    if (imgCache.current[movie.id]) { setReadyId(movie.id); return; }
+    const src = movie.backdrop || movie.poster;
+    if (!src) return;
+    const img = new Image();
+    img.src = src;
+    const done = () => { imgCache.current[movie.id] = true; setReadyId(movie.id); };
+    img.onload = done;
+    img.onerror = done;
+  }, [movie]);
+
+  const readyMovie = movie && movie.id === readyId ? movie : null;
+
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
       <AnimatePresence mode="sync">
-        {movie && (
+        {readyMovie && (
           <motion.div
-            key={movie.id}
+            key={readyMovie.id}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.0, ease: 'easeInOut' }}
             className="absolute inset-0"
           >
-            {/* ── Layer 1: Full-page Ambient Poster Colour Glow ──────────────
-                Blurred + heavily saturated backdrop that tints the entire page
-                with the movie's dominant colour. Visible especially below the
-                hero in the content row area. */}
-            <img
-              src={movie.backdrop || movie.poster}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover object-top"
-              style={{
-                filter: 'blur(55px) saturate(2.6) brightness(0.75)',
-                transform: 'scale(1.18)',
-                opacity: 0.95,
-              }}
-            />
-            {/* Gradient overlay: lighter at bottom so poster colour bleeds
-                through the content rows; darker at top to not compete with
-                the crisp backdrop layer. */}
+            {/* ── Sharp hero image — bottom fade via CSS mask ───────────────────
+                mask-image: the image stays fully opaque (black mask = visible)
+                from 0%→42%, then alpha-fades to fully transparent at 96%.
+                "Transparent" in the mask = the image pixel is invisible →
+                the aurora layer beneath shows through with full colour.
+                NO dark overlay is placed here for the bottom fade. */}
             <div
               className="absolute inset-0"
               style={{
-                background:
-                  'linear-gradient(to bottom, rgba(8,8,10,0.10) 0%, rgba(8,8,10,0.20) 35%, rgba(8,8,10,0.38) 60%, rgba(8,8,10,0.45) 100%)',
-              }}
-            />
-
-            {/* ── Layer 2: Crystal-Clear Cinematic Backdrop ──────────────────
-                Full-resolution, zero blur. Covers hero + Browse/first row (85 vh).
-                CSS mask dissolves it softly into the ambient glow below. */}
-            <div
-              className="absolute inset-x-0 top-0 overflow-hidden"
-              style={{
-                height: '85vh',
-                minHeight: '600px',
-                maxHeight: '920px',
                 WebkitMaskImage:
-                  'linear-gradient(to bottom, black 0%, black 72%, transparent 99%)',
+                  'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
                 maskImage:
-                  'linear-gradient(to bottom, black 0%, black 72%, transparent 99%)',
+                  'linear-gradient(to bottom, black 0%, black 50%, transparent 100%)',
               }}
             >
               <img
-                src={movie.backdrop || movie.poster}
+                src={readyMovie.backdrop || readyMovie.poster}
                 alt=""
-                className="w-full h-full object-cover object-top"
-                style={{ filter: 'brightness(0.93) contrast(1.05)' }}
+                className="absolute inset-0 w-full h-full object-cover object-top"
+                style={{ filter: 'brightness(0.84) contrast(1.08) saturate(1.06)' }}
               />
-
-              {/* Horizontal gradient: dark left side for text readability */}
+              {/* Left subtle vignette for text readability without creating a heavy black bar/patch */}
               <div
                 className="absolute inset-0"
                 style={{
                   background:
-                    'linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.40) 30%, rgba(0,0,0,0.08) 55%, transparent 80%)',
-                }}
-              />
-
-              {/* Top vignette: blends with the navbar */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.08) 12%, transparent 35%)',
+                    'linear-gradient(to right, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.15) 30%, transparent 60%)',
                 }}
               />
             </div>

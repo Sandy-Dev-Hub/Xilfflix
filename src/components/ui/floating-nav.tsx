@@ -30,8 +30,11 @@ export default function FloatingNav() {
     <div className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[96%] max-w-md sm:max-w-lg pointer-events-none">
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="relative flex items-center justify-between bg-[#141414]/90 backdrop-blur-xl shadow-[0_10px_35px_rgba(0,0,0,0.65)] rounded-full p-1 border border-white/10 pointer-events-auto select-none"
+        className="relative flex items-center justify-between bg-black/40 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] rounded-full p-1.5 border border-white/15 pointer-events-auto select-none overflow-hidden"
       >
+        {/* Subtle glass reflection highlight on top edge */}
+        <div className="absolute inset-x-6 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
         {NAV_ITEMS.map((item, index) => {
           const isActive = activeIndex === index;
           const Icon = item.icon;
@@ -42,15 +45,15 @@ export default function FloatingNav() {
               onClick={() => navigate(item.path)}
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
-              className={`relative flex-1 flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-full text-xs font-medium transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-                isActive ? "text-white" : "text-white/50 hover:text-white/80 active:text-white/90"
+              className={`relative flex-1 flex flex-col items-center justify-center py-1.5 sm:py-2 px-1 rounded-full text-xs font-medium transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                isActive ? "text-white" : "text-white/60 hover:text-white/90 active:text-white"
               }`}
             >
               {/* Smooth sliding translucent active capsule */}
               {isActive && (
                 <motion.div
                   layoutId="floatingNavActiveCapsule"
-                  className="absolute inset-0 rounded-full bg-white/15 backdrop-blur-md border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_2px_10px_rgba(0,0,0,0.35)]"
+                  className="absolute inset-0 rounded-full bg-white/20 backdrop-blur-md border border-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_4px_16px_rgba(0,0,0,0.35)]"
                   transition={{
                     type: "spring",
                     stiffness: 420,

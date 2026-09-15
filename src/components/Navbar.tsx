@@ -1,37 +1,20 @@
-import { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, ChevronDown } from 'lucide-react';
+import { Search, Bell } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { useAuthStore } from '@/store/useAuthStore';
-import ProfileMenu from './ProfileMenu';
 import NotificationPanel from './NotificationPanel';
-import AuthModal from './AuthModal';
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const { setSearchOpen, profile, unreadCount } = useAppStore();
-  const { user } = useAuthStore();
-  const profileRef = useRef<HTMLDivElement>(null);
+  const { setSearchOpen, unreadCount } = useAppStore();
   const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Transparent → opaque on scroll
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // Close profile dropdown on outside click
+  // Close notifications dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false);
-      }
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
@@ -45,6 +28,14 @@ export default function Navbar() {
     setNotifOpen(false);
   };
 
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname !== '/') {
+      navigate('/');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const unread = unreadCount();
 
   return (
@@ -52,40 +43,34 @@ export default function Navbar() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? 'bg-xf-bg/95 backdrop-blur-md shadow-lg shadow-black/30'
-          : 'bg-gradient-to-b from-black/80 to-transparent'
-      }`}
+      className="fixed top-0 left-0 right-0 z-50 bg-transparent transition-all duration-300 pointer-events-none"
     >
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 lg:h-16">
-          {/* Logo & Addon */}
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pointer-events-auto">
+        <div className="flex items-center justify-between h-16 sm:h-20 pt-2">
+          {/* Logo */}
           <div className="flex items-center min-w-0">
             <Link
               to="/"
-              className="flex-shrink-0 focus-visible:outline-xf-red"
+              onClick={handleLogoClick}
+              className="flex-shrink-0 focus-visible:outline-xf-red flex items-center transition-transform duration-200 hover:scale-105 active:scale-95 py-1"
               aria-label="Xilfflix Home"
             >
-              <span className="font-display font-black text-xl sm:text-2xl lg:text-3xl tracking-tighter">
-                <span className="text-xf-red">X</span>
-                <span className="text-white">ILFFLIX</span>
-              </span>
+              <img
+                src="/logo.png"
+                alt="Xilfflix"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto max-w-[240px] sm:max-w-[280px] object-contain drop-shadow-xl filter"
+              />
             </Link>
             
             <div id="navbar-addon" className="flex items-center min-w-0" />
           </div>
 
-          {/* Desktop nav links removed (using floating nav instead) */}
-          <nav className="hidden lg:flex items-center gap-0.5 ml-8" aria-label="Primary navigation">
-          </nav>
-
-          {/* Right section */}
-          <div className="flex items-center gap-1.5 ml-auto">
+          {/* Right section: Search & Notifications only */}
+          <div className="flex items-center gap-2.5 ml-auto">
             {/* Search */}
             <button
               onClick={handleSearchClick}
-              className="p-2 text-xf-muted hover:text-white transition-colors duration-200 rounded-full hover:bg-white/10"
+              className="p-2.5 text-white/80 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/10 transition-all duration-200 rounded-full shadow-md hover:scale-105 active:scale-95"
               aria-label="Open search"
               id="navbar-search-btn"
             >
@@ -93,17 +78,17 @@ export default function Navbar() {
             </button>
 
             {/* Notifications */}
-            <div className="hidden sm:block relative" ref={notifRef}>
+            <div className="relative" ref={notifRef}>
               <button
-                onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
-                className="relative p-2 text-xf-muted hover:text-white transition-colors duration-200 rounded-full hover:bg-white/10"
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative p-2.5 text-white/80 hover:text-white bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/10 transition-all duration-200 rounded-full shadow-md hover:scale-105 active:scale-95"
                 aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
                 aria-expanded={notifOpen}
               >
                 <Bell size={20} />
                 {/* Unread badge */}
                 {unread > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-xf-red rounded-full flex items-center justify-center text-white text-[9px] font-bold leading-none">
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-xf-red rounded-full flex items-center justify-center text-white text-[9px] font-bold leading-none shadow-sm">
                     {unread > 9 ? '9+' : unread}
                   </span>
                 )}
@@ -115,57 +100,9 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Profile / Auth */}
-            {user ? (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 active:scale-95 backdrop-blur-md border border-white/15 transition-all duration-200 group"
-                  aria-label="Profile menu"
-                  aria-expanded={profileOpen}
-                  id="profile-menu-btn"
-                >
-                  <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm"
-                    style={{ backgroundColor: profile.avatarColor || '#E50914' }}
-                  >
-                    {(user.user_metadata?.display_name || user.email || 'U').charAt(0).toUpperCase()}
-                  </div>
-                  <span className="hidden md:inline text-xs font-semibold text-white max-w-[100px] truncate">
-                    {user.user_metadata?.display_name || user.email?.split('@')[0]}
-                  </span>
-                  <motion.div
-                    animate={{ rotate: profileOpen ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <ChevronDown size={14} className="text-xf-muted group-hover:text-white" />
-                  </motion.div>
-                </button>
-                <AnimatePresence>
-                  {profileOpen && (
-                    <ProfileMenu
-                      onClose={() => setProfileOpen(false)}
-                      onNavigate={(path) => { navigate(path); setProfileOpen(false); }}
-                    />
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <button
-                onClick={() => setAuthModalOpen(true)}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-semibold text-white transition-all duration-200 shadow-sm"
-              >
-                <span>Sign In</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
-
-      <AnimatePresence>
-        {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
-      </AnimatePresence>
     </motion.nav>
   );
 }
