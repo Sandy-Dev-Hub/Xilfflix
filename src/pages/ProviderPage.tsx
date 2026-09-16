@@ -4,15 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Film,
-  Tv,
-  Search,
 } from 'lucide-react';
 import { PROVIDERS_LIST } from '@/data/providers';
 import type { Movie } from '@/types/movie';
 import { getProviderContentPage } from '@/services/tmdb';
 import MovieCard from '@/components/MovieCard';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
-import { useAppStore } from '@/store/useAppStore';
 
 const TMDB_LOGO_BASE = 'https://image.tmdb.org/t/p/w154';
 
@@ -25,7 +22,6 @@ const pageVariants = {
 export default function ProviderPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { setSearchOpen } = useAppStore();
 
   const provider = PROVIDERS_LIST.find((p) => p.id === id) ?? null;
 
@@ -125,28 +121,28 @@ export default function ProviderPage() {
       animate="animate"
       exit="exit"
       className="min-h-screen relative overflow-x-hidden"
-      style={{ backgroundColor: '#050505' }}
+      style={{ backgroundColor: '#060709' }}
     >
-      {/* ── Blurry Ambient Background ──────────────────────────────────────── */}
+      {/* ── Aurora Transparency Ambient Background ─────────────────────────── */}
       <ProviderAmbientBackground glowColor={provider.glowColor} bgColor={provider.bgColor} />
 
       {/* ── Top Navigation Bar ─────────────────────────────────────────────── */}
-      <ProviderNavbar onBack={() => navigate(-1)} onSearch={() => setSearchOpen(true)} />
+      <ProviderNavbar onBack={() => navigate(-1)} />
 
       {/* ── Content ────────────────────────────────────────────────────────── */}
-      <div className="relative z-10 pt-20 sm:pt-24">
+      <div className="relative z-10 pt-16 sm:pt-20">
         {/* ── Provider Brand Header ──────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="px-4 sm:px-8 lg:px-14 pt-6 pb-2"
+          className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 pt-4 sm:pt-6 pb-2"
         >
           {/* Logo + Name row */}
-          <div className="flex items-center gap-5 sm:gap-7 mb-3">
+          <div className="flex items-center gap-4 sm:gap-6 mb-4">
             {/* Provider icon */}
             <div
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-[22px] sm:rounded-[26px] overflow-hidden shrink-0 shadow-lg"
+              className="w-14 h-14 sm:w-18 sm:h-18 rounded-[20px] sm:rounded-[24px] overflow-hidden shrink-0 shadow-2xl ring-1 ring-white/10"
               style={{
                 backgroundColor: provider.bgColor,
               }}
@@ -171,56 +167,52 @@ export default function ProviderPage() {
             </div>
           </div>
 
-          {/* ── Filter Capsule ── */}
-          <div className="mt-5 flex flex-wrap items-center gap-3 sm:gap-4 border-t border-white/10 pt-5">
-            {/* Movies / Series glass capsule — mirrors floating navbar style */}
+          {/* ── Filter Capsule (Seamless Pill Switcher without divider line) ── */}
+          <div className="mt-4 sm:mt-5 flex items-center">
             <nav
               aria-label="Content type"
-              className="relative flex items-center justify-between bg-black/40 backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.12)] rounded-full p-1.5 border border-white/15 overflow-hidden select-none"
+              className="relative inline-flex items-center p-1 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.3)] select-none"
             >
-              {/* Top glass reflection highlight */}
-              <div className="absolute inset-x-4 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
-
               {(
                 [
-                  { key: 'movie' as const, label: 'Movies', icon: Film },
-                  { key: 'tv' as const, label: 'Series', icon: Tv },
-                ] as { key: 'movie' | 'tv'; label: string; icon: React.ElementType }[]
-              ).map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setMediaType(key)}
-                  aria-pressed={mediaType === key}
-                  className={`relative flex items-center gap-1 px-3 py-1.5 sm:px-5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-                    mediaType === key ? 'text-white' : 'text-white/60 hover:text-white/90'
-                  }`}
-                >
-                  {/* Active capsule indicator */}
-                  {mediaType === key && (
-                    <motion.div
-                      layoutId="providerTabCapsule"
-                      className="absolute inset-0 rounded-full bg-white/20 backdrop-blur-md border border-white/25 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_4px_12px_rgba(0,0,0,0.3)]"
-                      transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.8 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1 sm:gap-1.5">
-                    <Icon size={13} className={mediaType === key ? 'text-white scale-110' : 'text-white/60'} />
-                    {label}
-                  </span>
-                </button>
-              ))}
+                  { key: 'movie' as const, label: 'Movies' },
+                  { key: 'tv' as const, label: 'Series' },
+                ] as const
+              ).map(({ key, label }) => {
+                const isActive = mediaType === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setMediaType(key)}
+                    aria-pressed={isActive}
+                    className={`relative px-5 sm:px-6 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+                      isActive ? 'text-zinc-950 font-bold' : 'text-white/70 hover:text-white'
+                    }`}
+                  >
+                    {/* Active white capsule */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="providerTabCapsule"
+                        className="absolute inset-0 rounded-full bg-white shadow-[0_2px_12px_rgba(0,0,0,0.3)]"
+                        transition={{ type: 'spring', stiffness: 450, damping: 35, mass: 0.8 }}
+                      />
+                    )}
+                    <span className="relative z-10">{label}</span>
+                  </button>
+                );
+              })}
             </nav>
           </div>
         </motion.div>
 
         {/* ── Content Grid ─────────────────────────────────────────────────── */}
-        <div className="px-4 sm:px-8 lg:px-14 mt-8 pb-24">
+        <div className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 mt-6 sm:mt-8 pb-32">
           {movies.length > 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 sm:gap-5"
             >
               {movies.map((movie, i) => (
                 <motion.div
@@ -230,7 +222,7 @@ export default function ProviderPage() {
                   transition={{ duration: 0.25, delay: Math.min(i * 0.025, 0.5) }}
                   className="w-full"
                 >
-                  <MovieCard movie={movie} posterMode={true} fluid={true} />
+                  <MovieCard movie={movie} posterMode={true} fluid={true} showInfo={true} hideBadges={true} />
                 </motion.div>
               ))}
             </motion.div>
@@ -265,7 +257,7 @@ export default function ProviderPage() {
   );
 }
 
-// ── Sub-component: Animated Blurry Ambient Background ──────────────────────────
+// ── Sub-component: Fluid Animated Aurora Transparency Background ───────────────
 function ProviderAmbientBackground({
   glowColor,
   bgColor,
@@ -279,137 +271,101 @@ function ProviderAmbientBackground({
       style={{ zIndex: 0 }}
       aria-hidden="true"
     >
-      {/* Deep base layer */}
-      <div className="absolute inset-0" style={{ backgroundColor: '#050505' }} />
-
-      {/* Primary brand glow – top-left aurora blob */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.2, ease: 'easeOut' }}
-        className="absolute -top-20 -left-20 w-[70vw] h-[70vh] rounded-full pointer-events-none"
+      {/* Dark organic base canvas */}
+      <div
+        className="absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse at center, ${glowColor} 0%, transparent 70%)`,
-          filter: 'blur(80px)',
-          opacity: 0.75,
+          background: 'radial-gradient(ellipse at 50% 0%, #0c1017 0%, #060709 100%)',
         }}
       />
 
-      {/* Secondary accent glow – bottom-right */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.4, ease: 'easeOut', delay: 0.2 }}
-        className="absolute bottom-0 right-0 w-[60vw] h-[50vh] rounded-full pointer-events-none"
+      {/* Aurora Wave 1: Flowing Northern Lights Curtain (Top Left -> Center) */}
+      <div
+        className="absolute -top-[10%] -left-[10%] w-[90vw] h-[85vh] rounded-[40%] pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse at center, ${glowColor} 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse at center, ${glowColor} 0%, rgba(255,255,255,0.06) 35%, transparent 70%)`,
+          filter: 'blur(90px)',
+          opacity: 0.85,
+          animation: 'aurora-drift-1 16s ease-in-out infinite alternate',
+        }}
+      />
+
+      {/* Aurora Wave 2: Sweeping Luminous Ribbon (Mid Right -> Center) */}
+      <div
+        className="absolute top-[20%] -right-[15%] w-[85vw] h-[75vh] rounded-[45%] pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at center, ${bgColor !== '#000000' ? bgColor : glowColor} 0%, ${glowColor} 40%, transparent 72%)`,
           filter: 'blur(100px)',
-          opacity: 0.45,
+          opacity: 0.6,
+          animation: 'aurora-drift-2 20s ease-in-out infinite alternate',
         }}
       />
 
-      {/* Subtle bg-color tint layer – mid-screen */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.0, delay: 0.3 }}
-        className="absolute top-1/4 left-1/3 w-[50vw] h-[50vh] rounded-full pointer-events-none"
-        style={{
-          backgroundColor: bgColor,
-          filter: 'blur(140px)',
-          opacity: 0.08,
-        }}
-      />
-
-      {/* Silky moving shimmer overlay */}
+      {/* Aurora Wave 3: Ambient Depth Stream (Lower screen glow) */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute bottom-[-10%] left-[15%] w-[80vw] h-[65vh] rounded-[50%] pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at center, ${glowColor} 0%, transparent 65%)`,
+          filter: 'blur(120px)',
+          opacity: 0.4,
+          animation: 'aurora-wave 14s ease-in-out infinite alternate',
+        }}
+      />
+
+      {/* Aurora Plasma Highlight Band: Organic light streak */}
+      <div
+        className="absolute top-0 inset-x-0 h-[60vh] pointer-events-none opacity-40 mix-blend-screen"
+        style={{
+          background: `conic-gradient(from 180deg at 50% 20%, transparent 0deg, ${glowColor} 120deg, transparent 240deg)`,
+          filter: 'blur(85px)',
+          transform: 'scaleX(1.4)',
+        }}
+      />
+
+      {/* Soft translucent sheen overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-60"
         style={{
           background:
-            'linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.012) 50%, transparent 100%)',
-        }}
-      />
-
-      {/* Dark vignette – keeps text readable */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse at 50% 0%, transparent 40%, rgba(5,5,5,0.55) 100%)',
-        }}
-      />
-
-      {/* Bottom fade-to-dark so grid content is readable */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(to bottom, transparent 30%, rgba(5,5,5,0.4) 60%, rgba(5,5,5,0.85) 100%)',
+            'radial-gradient(circle at 50% 15%, transparent 35%, rgba(6,7,9,0.3) 70%, rgba(6,7,9,0.75) 100%)',
         }}
       />
     </div>
   );
 }
 
-// ── Sub-component: Provider Page Top Navbar ─────────────────────────────────
-function ProviderNavbar({
-  onBack,
-  onSearch,
-}: {
-  onBack: () => void;
-  onSearch: () => void;
-}) {
-
+// ── Sub-component: Clean Transparent Provider Page Top Navbar ─────────────────
+function ProviderNavbar({ onBack }: { onBack: () => void }) {
   return (
     <motion.nav
-      initial={{ y: -20, opacity: 0 }}
+      initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.45, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
       className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
     >
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(to bottom, rgba(5,5,5,0.80) 0%, rgba(5,5,5,0.40) 75%, transparent 100%)',
-          backdropFilter: 'blur(0px)',
-        }}
-      />
       <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pointer-events-auto">
-        <div className="flex items-center h-16 sm:h-20 gap-4 sm:gap-6">
-          {/* Back Button */}
+        <div className="flex items-center h-14 sm:h-16 gap-1.5 sm:gap-2">
+          {/* Clean Back Button */}
           <button
             onClick={onBack}
             aria-label="Go back"
-            className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/40 hover:bg-black/70 border border-white/15 hover:border-white/35 text-white/80 hover:text-white transition-all duration-200 backdrop-blur-md shrink-0 cursor-pointer group"
+            className="p-1.5 -ml-1.5 rounded-full hover:bg-white/10 text-white/90 hover:text-white transition-all duration-200 shrink-0 cursor-pointer group active:scale-95"
           >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform duration-150" />
-            <span className="text-sm font-semibold hidden sm:inline">Back</span>
+            <ArrowLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform duration-150" />
           </button>
 
-          {/* Logo */}
+          {/* Logo next to arrow */}
           <Link
             to="/"
             aria-label="Xilfflix Home"
-            className="flex-shrink-0 flex items-center hover:scale-105 active:scale-95 transition-transform duration-200 py-1"
+            className="flex-shrink-0 flex items-center hover:opacity-90 active:scale-95 transition-all duration-200 py-1"
           >
             <img
               src="/logo.png"
               alt="Xilfflix"
-              className="h-8 sm:h-10 w-auto object-contain drop-shadow-xl"
+              className="h-7 sm:h-8 w-auto object-contain drop-shadow-md"
             />
           </Link>
-
-          {/* Right — Search */}
-          <div className="flex items-center gap-2 ml-auto">
-            <button
-              onClick={onSearch}
-              aria-label="Search"
-              className="p-2.5 rounded-full bg-black/35 hover:bg-black/60 border border-white/10 hover:border-white/25 text-white/75 hover:text-white backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-          </div>
         </div>
       </div>
     </motion.nav>

@@ -53,16 +53,22 @@ export default function App() {
     initialize();
   }, [initialize]);
 
-  // Hide navbars on Watch, Details, and Provider pages (they supply their own)
-  const hideNavs = location.pathname.startsWith('/watch') || 
-                   location.pathname.startsWith('/movie/') || 
-                   location.pathname.startsWith('/tv/') ||
-                   location.pathname.startsWith('/provider');
+  // Hide top standard navbar on Watch, Details, and Provider pages (they supply their own headers)
+  const hideTopNav = location.pathname.startsWith('/watch') || 
+                     location.pathname.startsWith('/movie/') || 
+                     location.pathname.startsWith('/tv/') ||
+                     location.pathname.startsWith('/provider');
+
+  // Hide floating bottom nav on player, detail, and provider pages
+  const hideFloatingNav = location.pathname.startsWith('/watch') || 
+                          location.pathname.startsWith('/movie/') || 
+                          location.pathname.startsWith('/tv/') ||
+                          location.pathname.startsWith('/provider');
 
   return (
     <div className="min-h-screen bg-transparent text-xf-text">
       <ScrollToTop />
-      {!hideNavs && <Navbar />}
+      {!hideTopNav && <Navbar />}
       <SearchOverlay />
 
       <AnimatePresence mode="wait">
@@ -87,7 +93,7 @@ export default function App() {
           </Routes>
         </Suspense>
       </AnimatePresence>
-      {!hideNavs && <FloatingNav />}
+      {!hideFloatingNav && <FloatingNav />}
       <ScrollToTopButton />
       <Analytics />
     </div>

@@ -13,6 +13,10 @@ interface MovieCardProps {
   posterMode?: boolean;
   /** When true, the card takes full width of its container */
   fluid?: boolean;
+  /** When true, renders title and metadata below the poster */
+  showInfo?: boolean;
+  /** When true, suppresses top badges */
+  hideBadges?: boolean;
 }
 
 export default function MovieCard({
@@ -20,6 +24,8 @@ export default function MovieCard({
   size = 'md',
   posterMode = true,
   fluid = false,
+  showInfo = false,
+  hideBadges = false,
 }: MovieCardProps) {
   const [imgError, setImgError] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -143,7 +149,7 @@ export default function MovieCard({
           )}
 
           {/* Badge ribbon */}
-          {badge && (
+          {badge && !hideBadges && (
             <div className="absolute top-2 left-2 z-10">
               <Badge label={badge} color="red" size="xs" />
             </div>
@@ -170,23 +176,20 @@ export default function MovieCard({
           )}
         </div>
 
-        {/* Title and details shown below card if landscape mode */}
-        {!posterMode && (
-          <div className="mt-2 px-1">
-            <p className="text-white text-[13px] sm:text-sm font-bold truncate leading-snug tracking-wide">
+        {/* Title and details below card */}
+        {(showInfo || !posterMode) && (
+          <div className="mt-2.5 px-0.5">
+            <p className="text-white text-xs sm:text-[13px] font-medium truncate leading-snug tracking-normal">
               {movie.title}
             </p>
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-white mt-1.5">
-              <span className="border border-white/40 px-1 py-0.5 rounded-sm uppercase tracking-wider text-white/80 bg-white/5">
-                {movie.type}
-              </span>
-              {movie.year && <span className="text-white/70">{movie.year}</span>}
-              {movie.rating && (
-                <div className="ml-auto flex items-center text-yellow-500">
-                  <span className="mr-0.5 text-lg leading-none mt-[-2px]">★</span>
+            <div className="flex items-center gap-2 text-[11px] font-medium text-white/60 mt-1">
+              {movie.rating ? (
+                <span className="flex items-center gap-1 text-white/90">
+                  <span className="text-xs leading-none">★</span>
                   <span>{movie.rating.toFixed(1)}</span>
-                </div>
-              )}
+                </span>
+              ) : null}
+              {movie.year ? <span>{movie.year}</span> : null}
             </div>
           </div>
         )}
