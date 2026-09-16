@@ -224,12 +224,8 @@ export default function MovieRow({
           className="flex gap-4 sm:gap-5 md:gap-6 overflow-x-auto scrollbar-hide py-2 scroll-smooth"
         >
           {allMovies.map((movie, i) => (
-            <motion.div
+            <div
               key={movie.id}
-              initial={{ opacity: 0, y: 8 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: Math.min(i * 0.03, 0.3), duration: 0.3 }}
               className={`flex-shrink-0 ${i === 0 ? 'ml-4 sm:ml-8 lg:ml-12' : ''} ${
                 i === allMovies.length - 1 ? 'mr-4 sm:mr-8 lg:mr-12' : ''
               }`}
@@ -239,7 +235,7 @@ export default function MovieRow({
               ) : (
                 <MovieCard movie={movie} posterMode={true} />
               )}
-            </motion.div>
+            </div>
           ))}
 
           {/* Infinite scroll sentinel + skeleton */}

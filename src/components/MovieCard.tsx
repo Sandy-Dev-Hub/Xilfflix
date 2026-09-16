@@ -6,6 +6,8 @@ import HoverPreview from './HoverPreview';
 import Badge from './Badge';
 import { getMovieLogo } from '@/services/tmdb';
 
+import { isUserScrolling } from '@/utils/scrollState';
+
 interface MovieCardProps {
   movie: Movie;
   size?: 'sm' | 'md';
@@ -62,30 +64,75 @@ export default function MovieCard({
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearTimers = () => {
-    if (openTimer.current) clearTimeout(openTimer.current);
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-  };
+  const clearTimers = useCallback(() => {
+    if (openTimer.current) {
+      clearTimeout(openTimer.current);
+      openTimer.current = null;
+    }
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+  }, []);
 
-  const handleMouseEnter = useCallback(() => {
-    clearTimers();
+  // Dismiss popup and cancel open timer immediately when scrolling occurs
+  useEffect(() => {
+    const handleScrollActivity = () => {
+      clearTimers();
+      setHovered(false);
+    };
+
+    window.addEventListener('scroll', handleScrollActivity, { passive: true, capture: true });
+    window.addEventListener('wheel', handleScrollActivity, { passive: true, capture: true });
+    window.addEventListener('touchmove', handleScrollActivity, { passive: true, capture: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollActivity, { capture: true });
+      window.removeEventListener('wheel', handleScrollActivity, { capture: true });
+      window.removeEventListener('touchmove', handleScrollActivity, { capture: true });
+    };
+  }, [clearTimers]);
+
+  const scheduleOpen = useCallback(() => {
+    if (isUserScrolling()) return;
+    if (openTimer.current) return;
+
     openTimer.current = setTimeout(() => {
+      if (isUserScrolling()) return;
       if (cardRef.current) {
         setCardRect(cardRef.current.getBoundingClientRect());
         setHovered(true);
       }
-    }, 120);
+    }, 450); // Deliberate 450ms hover pause (prevents popup triggers when scrolling or glancing past)
   }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    scheduleOpen();
+  }, [scheduleOpen]);
+
+  const handleMouseMove = useCallback(() => {
+    // If not already hovered and no open timer running (e.g. mouse moved onto card after scroll stopped)
+    if (!hovered && !openTimer.current && !isUserScrolling()) {
+      scheduleOpen();
+    }
+  }, [hovered, scheduleOpen]);
 
   const handleMouseLeave = useCallback(() => {
     clearTimers();
     closeTimer.current = setTimeout(() => {
       setHovered(false);
-    }, 120);
-  }, []);
+    }, 150);
+  }, [clearTimers]);
 
   const handlePreviewEnter = useCallback(() => {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
   }, []);
 
   const handlePreviewLeave = useCallback(() => {
@@ -122,6 +169,7 @@ export default function MovieCard({
         ref={cardRef}
         className={`relative ${widthClass} flex-shrink-0 cursor-pointer group/card`}
         onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         onKeyDown={handleKeyDown}

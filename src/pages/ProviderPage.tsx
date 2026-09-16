@@ -130,19 +130,19 @@ export default function ProviderPage() {
       <ProviderNavbar onBack={() => navigate(-1)} />
 
       {/* ── Content ────────────────────────────────────────────────────────── */}
-      <div className="relative z-10 pt-16 sm:pt-20">
+      <div className="relative z-10 pt-12 sm:pt-14 md:pt-16">
         {/* ── Provider Brand Header ──────────────────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: -16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 pt-4 sm:pt-6 pb-2"
+          className="max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 pt-1 sm:pt-2 pb-2"
         >
           {/* Logo + Name row */}
-          <div className="flex items-center gap-4 sm:gap-6 mb-4">
-            {/* Provider icon */}
+          <div className="flex items-center gap-4 sm:gap-6 mb-5">
+            {/* Curvy Provider icon */}
             <div
-              className="w-14 h-14 sm:w-18 sm:h-18 rounded-[20px] sm:rounded-[24px] overflow-hidden shrink-0 shadow-2xl ring-1 ring-white/10"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-[28px] sm:rounded-[34px] overflow-hidden shrink-0 shadow-2xl ring-1 ring-white/15 flex items-center justify-center p-1 transition-transform duration-300 hover:scale-105"
               style={{
                 backgroundColor: provider.bgColor,
               }}
@@ -150,7 +150,7 @@ export default function ProviderPage() {
               <img
                 src={`${TMDB_LOGO_BASE}${provider.logoPath}`}
                 alt={provider.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-[24px] sm:rounded-[30px]"
               />
             </div>
 
@@ -343,8 +343,8 @@ function ProviderNavbar({ onBack }: { onBack: () => void }) {
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
     >
-      <div className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pointer-events-auto">
-        <div className="flex items-center h-14 sm:h-16 gap-1.5 sm:gap-2">
+      <div className="relative max-w-[1600px] mx-auto px-5 sm:px-8 lg:px-12 pointer-events-auto">
+        <div className="flex items-center h-14 sm:h-16 gap-2">
           {/* Clean Back Button */}
           <button
             onClick={onBack}

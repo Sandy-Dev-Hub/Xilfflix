@@ -17,19 +17,25 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
 
   return (
     <div
-      className="relative flex-shrink-0 flex items-end cursor-pointer group/top10"
+      className="relative flex-shrink-0 flex items-end cursor-pointer group/top10 select-none outline-none"
       // Left padding creates room for the numeral to peek out from behind the card
-      style={{ paddingLeft: rank < 10 ? '1.85rem' : '2.6rem' }}
+      style={{ paddingLeft: rank < 10 ? '2rem' : '3.2rem' }}
+      onClick={() => navigate(`/${movie.type}/${movie.id}`)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/${movie.type}/${movie.id}`)}
+      tabIndex={0}
+      role="button"
+      aria-label={`${movie.title} — ranked #${rank}`}
     >
       {/* ── Large rank numeral — behind the card ───────────────────────────── */}
       <span
         aria-hidden="true"
-        className="absolute left-0 bottom-0 select-none font-display font-black leading-none pointer-events-none"
+        className="absolute left-0 bottom-0 select-none font-display font-black leading-none pointer-events-none transition-transform duration-300 group-hover/top10:-translate-x-1"
         style={{
-          fontSize: 'clamp(48px, 8.5vw, 96px)',
-          lineHeight: 0.82,
-          color: '#141414',
-          WebkitTextStroke: '1.5px #656565',
+          fontSize: 'clamp(64px, 10vw, 105px)',
+          lineHeight: 0.78,
+          color: '#0a0a0a',
+          WebkitTextStroke: '2px #606060',
+          textShadow: '0 4px 16px rgba(0,0,0,0.8)',
           zIndex: 0,
           userSelect: 'none',
         }}
@@ -39,16 +45,11 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
 
       {/* ── Portrait card — sits above numeral, z-10 ──────────────────────── */}
       <div
-        className="relative z-10 w-[110px] sm:w-[130px] md:w-[155px]"
-        onClick={() => navigate(`/${movie.type}/${movie.id}`)}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/${movie.type}/${movie.id}`)}
-        tabIndex={0}
-        role="button"
-        aria-label={`${movie.title} — ranked #${rank}`}
+        className="relative z-10 w-[115px] sm:w-[135px] md:w-[155px]"
       >
         {/* Card image — 2:3 portrait aspect ratio */}
         <div
-          className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-xf-card shadow-lg transition-transform duration-200 group-hover/top10:scale-[1.04]"
+          className="relative rounded-xl sm:rounded-2xl overflow-hidden bg-xf-card shadow-lg transition-transform duration-300 ease-out group-hover/top10:scale-[1.04] group-hover/top10:shadow-2xl"
           style={{ aspectRatio: '2/3' }}
         >
           {thumbSrc ? (
@@ -66,7 +67,7 @@ export default function TopTenCard({ movie, rank }: TopTenCardProps) {
           )}
 
           {/* Gradient overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover/top10:opacity-100 transition-opacity duration-200" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/top10:opacity-100 transition-opacity duration-200" />
 
           {/* 'TOP 10' ribbon top-right */}
           <div className="absolute top-1.5 right-1.5 z-20">
