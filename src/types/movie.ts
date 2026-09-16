@@ -53,6 +53,11 @@ export interface Movie {
   similar?: Movie[];      // Similar movies suggestions
   badges?: string[];      // e.g. ["New Release", "Trending", "Top Rated"]
   originalLanguage?: string; // e.g. "ta", "te", "hi", "en", "ja", "ko"
+  releaseDate?: string;
+  budget?: number;
+  revenue?: number;
+  voteCount?: number;
+  productionCompanies?: { name: string; logoPath: string | null }[];
 }
 
 export interface Notification {

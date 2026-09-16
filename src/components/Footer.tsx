@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export default function Footer() {
   return (
-    <footer className="mt-16 border-t border-white/8 bg-xf-bg">
+    <footer className="mt-16 border-t border-white/5 bg-transparent relative z-10 backdrop-blur-[2px]">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 lg:px-12 py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link to="/" aria-label="Xilfflix Home">

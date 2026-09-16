@@ -146,6 +146,11 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
       posterPath: s.poster_path ? `https://image.tmdb.org/t/p/w300${s.poster_path}` : null,
     }));
 
+  const productionCompanies = (item.production_companies || []).map((p: any) => ({
+    name: p.name,
+    logoPath: p.logo_path ? `https://image.tmdb.org/t/p/w200${p.logo_path}` : null,
+  }));
+
   return {
     id: String(item.id),
     title: item.title || item.name || 'Unknown',
@@ -169,6 +174,11 @@ export function normalizeTMDB(item: any, forceType?: 'movie' | 'tv'): Movie {
     region: 'US',
     similar,
     originalLanguage: item.original_language || item.original_language_code || 'en',
+    releaseDate: item.release_date || item.first_air_date || '',
+    budget: item.budget || 0,
+    revenue: item.revenue || 0,
+    voteCount: item.vote_count || 0,
+    productionCompanies,
   };
 }
 
@@ -328,9 +338,18 @@ export async function getTopRated(
 }
 
 export async function getMovieDetails(id: string, type: 'movie' | 'tv'): Promise<Movie> {
-  const append = type === 'movie' ? 'credits,release_dates,similar,recommendations' : 'credits,content_ratings,similar,recommendations';
-  const data = await fetchTMDB(`/${type}/${id}`, { append_to_response: append });
-  return normalizeTMDB(data, type);
+  try {
+    const append = type === 'movie' ? 'credits,release_dates,similar,recommendations' : 'credits,content_ratings,similar,recommendations';
+    const data = await fetchTMDB(`/${type}/${id}`, { append_to_response: append });
+    return normalizeTMDB(data, type);
+  } catch (err) {
+    try {
+      const data = await fetchTMDB(`/${type}/${id}`);
+      return normalizeTMDB(data, type);
+    } catch {
+      throw err;
+    }
+  }
 }
 
 export async function getTVSeason(tvId: string, seasonNumber: number): Promise<any[]> {

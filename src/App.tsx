@@ -59,11 +59,10 @@ export default function App() {
                      location.pathname.startsWith('/tv/') ||
                      location.pathname.startsWith('/provider');
 
-  // Hide floating bottom nav on player, detail, and provider pages
-  const hideFloatingNav = location.pathname.startsWith('/watch') || 
-                          location.pathname.startsWith('/movie/') || 
-                          location.pathname.startsWith('/tv/') ||
-                          location.pathname.startsWith('/provider');
+  // Hide floating bottom nav on player and detail pages
+  const hideFloatingNav = location.pathname.startsWith('/watch') ||
+                          location.pathname.startsWith('/movie/') ||
+                          location.pathname.startsWith('/tv/');
 
   return (
     <div className="min-h-screen bg-transparent text-xf-text">
