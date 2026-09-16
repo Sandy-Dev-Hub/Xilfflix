@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Info, Tv2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Info, Tv2, ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { getMovieDetails, getTVSeason } from '@/services/tmdb';
 import { useTMDB } from '@/hooks/useTMDB';
 import { useAppStore } from '@/store/useAppStore';
@@ -229,10 +229,6 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
             <p className="text-xf-subtle text-xs font-semibold uppercase tracking-wider">
               Servers
             </p>
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-              <ShieldCheck size={13} />
-              Ad Blocker Active
-            </span>
           </div>
           <div className="flex flex-wrap gap-2">
             {servers.map((server, i) => (
@@ -261,9 +257,6 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
               </button>
             ))}
           </div>
-          <p className="text-xf-subtle text-xs mt-2">
-            All servers stream high quality with ad protection enabled. If video doesn't load, switch to another server.
-          </p>
         </div>
 
         {/* ── TV Season/Episode Picker ───────────────────────────────────────── */}

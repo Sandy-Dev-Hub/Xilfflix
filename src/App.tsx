@@ -22,6 +22,7 @@ const Profile = lazy(() => import('@/pages/Profile'));
 const Legal = lazy(() => import('@/pages/Legal'));
 const WatchParty = lazy(() => import('@/pages/WatchParty'));
 const MovieParty = lazy(() => import('@/pages/MovieParty'));
+const ProviderPage = lazy(() => import('@/pages/ProviderPage'));
 
 function PageFallback() {
   return (
@@ -52,10 +53,11 @@ export default function App() {
     initialize();
   }, [initialize]);
 
-  // Hide navbars on Watch and Details pages
+  // Hide navbars on Watch, Details, and Provider pages (they supply their own)
   const hideNavs = location.pathname.startsWith('/watch') || 
                    location.pathname.startsWith('/movie/') || 
-                   location.pathname.startsWith('/tv/');
+                   location.pathname.startsWith('/tv/') ||
+                   location.pathname.startsWith('/provider');
 
   return (
     <div className="min-h-screen bg-transparent text-xf-text">
@@ -80,6 +82,7 @@ export default function App() {
             <Route path="/my-list" element={<MyList />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/legal" element={<Legal />} />
+            <Route path="/provider/:id" element={<ProviderPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

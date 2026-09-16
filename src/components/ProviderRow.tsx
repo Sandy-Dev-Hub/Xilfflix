@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { PROVIDERS_LIST, type ProviderItem } from '@/data/providers';
-import ProviderModal from './ProviderModal';
+import { useNavigate } from 'react-router-dom';
+import { PROVIDERS_LIST } from '@/data/providers';
 
 const TMDB_LOGO_BASE = 'https://image.tmdb.org/t/p/w154';
 
@@ -25,7 +25,7 @@ export default function ProviderRow({
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<ProviderItem | null>(null);
+  const navigate = useNavigate();
 
   /* ── Check scroll boundaries ── */
   const updateScrollState = useCallback(() => {
@@ -170,7 +170,7 @@ export default function ProviderRow({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: index * 0.02 }}
-                onClick={() => setSelectedProvider(provider)}
+                onClick={() => navigate(`/provider/${provider.id}`)}
                 className={`flex flex-col items-center flex-shrink-0 cursor-pointer group/card w-[72px] sm:w-[84px] md:w-[92px] ${
                   index === 0 ? 'ml-4 sm:ml-8 lg:ml-12' : ''
                 } ${index === PROVIDERS_LIST.length - 1 ? 'mr-4 sm:mr-8 lg:mr-12' : ''}`}
@@ -214,12 +214,6 @@ export default function ProviderRow({
           </div>
         </div>
       </div>
-
-      {/* Provider Catalog Modal */}
-      <ProviderModal
-        provider={selectedProvider}
-        onClose={() => setSelectedProvider(null)}
-      />
     </>
   );
 }
