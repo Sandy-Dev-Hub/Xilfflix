@@ -2,9 +2,9 @@ import type { Server } from '@/types/movie';
 
 /**
  * Builds the embed servers for a given TMDB ID.
- * Server 1: VidLink (Fast HD)
- * Server 2: Nxsha (Multi-Lang)
- * Server 3: Fmov
+ * Server 1: Fmov
+ * Server 2: VidLink (Fast HD)
+ * Server 3: Nxsha (Multi-Lang)
  * Server 4: VidSrc
  */
 export function makeServers(
@@ -16,19 +16,19 @@ export function makeServers(
   if (!tmdbId) {
     // Fallback while ID is not yet known (e.g. before TMDB fetch completes)
     return [
-      { name: 'Server 1', status: 'online', sourceUrl: '' },
-      { name: 'Server 2 (Multi-Lang)', status: 'online', sourceUrl: '' },
-      { name: 'Server 3', status: 'online', sourceUrl: '' },
+      { name: 'Server 1 (Download option)', status: 'online', sourceUrl: '' },
+      { name: 'Server 2 (Fast HD)', status: 'online', sourceUrl: '' },
+      { name: 'Server 3 (Multi-Lang)', status: 'online', sourceUrl: '' },
       { name: 'Server 4', status: 'online', sourceUrl: '' },
     ];
   }
 
   if (mediaType === 'movie') {
-    let server1Url = `https://vidlink.pro/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
-    let server2Url = `https://nxsha.space/embed/movie/${tmdbId}`;
-    let server3Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
+    let server1Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
+    let server2Url = `https://vidlink.pro/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
+    let server3Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server4Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
-    let server2Status: 'online' | 'offline' = 'online';
+    let server1Status: 'online' | 'offline' = 'online';
     let server3Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies if needed
@@ -40,17 +40,17 @@ export function makeServers(
 
     return [
       {
-        name: 'Server 1',
-        status: 'online',
+        name: 'Server 1 (Download option)',
+        status: server1Status,
         sourceUrl: server1Url,
       },
       {
-        name: 'Server 2 (Multi-Lang)',
-        status: server2Status,
+        name: 'Server 2 (Fast HD)',
+        status: 'online',
         sourceUrl: server2Url,
       },
       {
-        name: 'Server 3',
+        name: 'Server 3 (Multi-Lang)',
         status: server3Status,
         sourceUrl: server3Url,
       },
@@ -65,19 +65,19 @@ export function makeServers(
   // TV Series
   return [
     {
-      name: 'Server 1',
+      name: 'Server 1 (Download option)',
+      status: 'online',
+      sourceUrl: `https://fmov.my/embed/tv/${tmdbId}/${season}/${episode}?color=E50914&nextEpisode=true&episodeSelector=true`,
+    },
+    {
+      name: 'Server 2 (Fast HD)',
       status: 'online',
       sourceUrl: `https://vidlink.pro/tv/${tmdbId}/${season}/${episode}?primaryColor=E50914&autoplay=true`,
     },
     {
-      name: 'Server 2 (Multi-Lang)',
+      name: 'Server 3 (Multi-Lang)',
       status: 'online',
       sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
-    },
-    {
-      name: 'Server 3',
-      status: 'online',
-      sourceUrl: `https://fmov.my/embed/tv/${tmdbId}/${season}/${episode}?color=E50914&nextEpisode=true&episodeSelector=true`,
     },
     {
       name: 'Server 4',

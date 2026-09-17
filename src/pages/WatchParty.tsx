@@ -319,7 +319,7 @@ export default function WatchParty() {
                     allowFullScreen
                     referrerPolicy="no-referrer-when-downgrade"
                     allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; web-share"
-                    sandbox={serverIdx === 0 ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation"}
+                    sandbox={activeServer?.sourceUrl?.includes('vidlink.pro') ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation"}
                     onError={() => setIframeError(true)}
                   />
                 )}
