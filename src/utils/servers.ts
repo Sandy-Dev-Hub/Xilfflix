@@ -2,8 +2,8 @@ import type { Server } from '@/types/movie';
 
 /**
  * Builds the embed servers for a given TMDB ID.
- * Server 1: VidSync (Multi-Audio)
- * Server 2: Fmov (Download option)
+ * Server 1: Fmov (Download option)
+ * Server 2: VidSync (Multi-Audio)
  * Server 3: VidLink (Fast HD)
  * Server 4: Nxsha (Multi-Lang)
  * Server 5: VidSrc
@@ -17,8 +17,8 @@ export function makeServers(
   if (!tmdbId) {
     // Fallback while ID is not yet known (e.g. before TMDB fetch completes)
     return [
-      { name: 'Server 1 (Multi-Audio And Download Option)', status: 'online', sourceUrl: '' },
-      { name: 'Server 2 (Download option)', status: 'online', sourceUrl: '' },
+      { name: 'Server 1 (Download option)', status: 'online', sourceUrl: '' },
+      { name: 'Server 2 (Multi-Audio)', status: 'online', sourceUrl: '' },
       { name: 'Server 3 (Fast HD)', status: 'online', sourceUrl: '' },
       { name: 'Server 4 (Multi-Lang)', status: 'online', sourceUrl: '' },
       { name: 'Server 5', status: 'online', sourceUrl: '' },
@@ -26,12 +26,12 @@ export function makeServers(
   }
 
   if (mediaType === 'movie') {
-    let server1Url = `https://vidsync.pro/embed/movie/${tmdbId}`;
-    let server2Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
+    let server1Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
+    let server2Url = `https://vidsync.pro/embed/movie/${tmdbId}`;
     let server3Url = `https://vidlink.pro/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
     let server4Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server5Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
-    let server2Status: 'online' | 'offline' = 'online';
+    let server1Status: 'online' | 'offline' = 'online';
     let server4Status: 'online' | 'offline' = 'online';
     
     // Custom overrides for specific movies if needed
@@ -43,13 +43,13 @@ export function makeServers(
 
     return [
       {
-        name: 'Server 1 (Multi-Audio)',
-        status: 'online',
+        name: 'Server 1 (Download option)',
+        status: server1Status,
         sourceUrl: server1Url,
       },
       {
-        name: 'Server 2 (Download option)',
-        status: server2Status,
+        name: 'Server 2 (Multi-Audio)',
+        status: 'online',
         sourceUrl: server2Url,
       },
       {
@@ -73,14 +73,14 @@ export function makeServers(
   // TV Series
   return [
     {
-      name: 'Server 1 (Multi-Audio)',
-      status: 'online',
-      sourceUrl: `https://vidsync.pro/embed/tv/${tmdbId}/${season}/${episode}`,
-    },
-    {
-      name: 'Server 2 (Download option)',
+      name: 'Server 1 (Download option)',
       status: 'online',
       sourceUrl: `https://fmov.my/embed/tv/${tmdbId}/${season}/${episode}?color=E50914&nextEpisode=true&episodeSelector=true`,
+    },
+    {
+      name: 'Server 2 (Multi-Audio)',
+      status: 'online',
+      sourceUrl: `https://vidsync.pro/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
       name: 'Server 3 (Fast HD)',

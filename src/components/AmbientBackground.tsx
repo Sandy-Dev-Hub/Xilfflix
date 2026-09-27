@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import type { Movie } from '@/types/movie';
 
 interface AmbientBackgroundProps {
@@ -12,33 +12,23 @@ interface AmbientBackgroundProps {
  * position: fixed  → stays behind ALL scrollable content; never scrolls away.
  * z-index: 0       → below the hero (z-[1]), content rows (z-10), navbar (z-50).
  * backgroundColor  → #050505 fallback so the canvas is never pure white.
- *
- * The "aurora blob" is the movie's own backdrop image, blurred so heavily
- * (120px) and scaled (1.4×) that zero recognisable detail remains — only
- * dominant colour and mood bleed through.
- *
- * The hero's sharp image (PageBackground, inside the hero container at
- * z-[1] with overflow:hidden) naturally occludes this layer in the hero area.
- * Below the hero, as content rows scroll over it, transparent row backgrounds
- * let the aurora colour show through continuously — no flat dead zones.
  */
 export default function AmbientBackground({ movie }: AmbientBackgroundProps) {
-  const [readyId, setReadyId] = useState<string | null>(null);
-  const imgCache = useRef<Record<string, boolean>>({});
+  const [layers, setLayers] = useState<{ id: string; src: string; key: number }[]>([]);
+  const layerKey = useRef(0);
 
   useEffect(() => {
     if (!movie) return;
-    if (imgCache.current[movie.id]) { setReadyId(movie.id); return; }
     const src = movie.backdrop || movie.poster;
     if (!src) return;
-    const img = new Image();
-    img.src = src;
-    const done = () => { imgCache.current[movie.id] = true; setReadyId(movie.id); };
-    img.onload = done;
-    img.onerror = done;
-  }, [movie]);
 
-  const readyMovie = movie && movie.id === readyId ? movie : null;
+    setLayers((prev) => {
+      if (prev.length > 0 && prev[prev.length - 1].id === movie.id) return prev;
+      layerKey.current += 1;
+      const newLayer = { id: movie.id, src, key: layerKey.current };
+      return [...prev.slice(-1), newLayer];
+    });
+  }, [movie?.id, movie?.backdrop, movie?.poster]);
 
   return (
     <div
@@ -46,23 +36,29 @@ export default function AmbientBackground({ movie }: AmbientBackgroundProps) {
       style={{ zIndex: 0, backgroundColor: '#050505' }}
       aria-hidden="true"
     >
-      <AnimatePresence mode="sync">
-        {readyMovie && (
+      {layers.map((layer, index) => {
+        const isTop = index === layers.length - 1;
+        const shouldFadeIn = isTop && layers.length > 1;
+
+        return (
           <motion.div
-            key={readyMovie.id}
-            initial={{ opacity: 0 }}
+            key={layer.key}
+            initial={shouldFadeIn ? { opacity: 0 } : { opacity: 1 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.0, ease: 'easeInOut' }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            onAnimationComplete={() => {
+              if (isTop && layers.length > 1) {
+                setLayers([layer]);
+              }
+            }}
             className="absolute inset-0"
+            style={{ zIndex: index }}
           >
-            {/* ── Aurora blob ──────────────────────────────────────────────────────
-                The backdrop, blurred into pure colour/mood. No recognisable
-                detail at 120px blur + 1.4× scale. opacity:0.50 keeps it vivid
-                without overpowering dark UI elements on top. */}
+            {/* ── Aurora blob ────────────────────────────────────────────────────── */}
             <img
-              src={readyMovie.backdrop || readyMovie.poster}
+              src={layer.src}
               alt=""
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover object-top"
               style={{
                 filter: 'blur(120px) saturate(2.0) brightness(0.80)',
@@ -71,8 +67,7 @@ export default function AmbientBackground({ movie }: AmbientBackgroundProps) {
               }}
             />
 
-            {/* Soft gradient fade toward the bottom so the aurora eases off
-                rather than abruptly ending at the viewport edge. */}
+            {/* Soft gradient fade toward the bottom */}
             <div
               className="absolute inset-0"
               style={{
@@ -81,8 +76,8 @@ export default function AmbientBackground({ movie }: AmbientBackgroundProps) {
               }}
             />
           </motion.div>
-        )}
-      </AnimatePresence>
+        );
+      })}
     </div>
   );
 }

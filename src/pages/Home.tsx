@@ -112,6 +112,8 @@ export default function Home() {
     []
   );
 
+  const heroMovies = useMemo(() => data?.trending?.slice(0, 10) || [], [data?.trending]);
+
   if (error) {
     return (
       <div className="min-h-screen bg-xf-bg flex items-center justify-center">
@@ -131,8 +133,7 @@ export default function Home() {
     );
   }
 
-  const { trending, topRatedMovies, topRatedTV } = data;
-  const heroMovies = trending.slice(0, 10);
+  const { topRatedMovies, topRatedTV } = data;
 
   return (
     <motion.div
@@ -146,7 +147,7 @@ export default function Home() {
       <AmbientBackground movie={activeHeroMovie} />
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <Hero movies={heroMovies} onActiveMovieChange={setActiveHeroMovie} activeMovie={activeHeroMovie} />
+      <Hero movies={heroMovies} onActiveMovieChange={setActiveHeroMovie} />
 
       {/* ── Content Rows ── positive gap on mobile, pulled up on desktop ── */}
       <div className="mt-4 md:-mt-16 relative z-10 flex flex-col gap-10 md:gap-12 pb-16">

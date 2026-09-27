@@ -1,5 +1,5 @@
-import { useRef, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import type { Movie } from '@/types/movie';
 
 interface PageBackgroundProps {
@@ -10,55 +10,49 @@ interface PageBackgroundProps {
  * Hero-scoped crisp backdrop — rendered inside the hero container
  * (position: relative; z-[1]; overflow: hidden).
  *
- * The bottom of the hero image dissolves into the fixed aurora layer
- * USING A CSS MASK, not a dark gradient overlay. This is the key difference:
- *   - mask-image fade  → image alpha goes to 0, aurora colour shows through
- *   - dark gradient    → paints black on top, kills colour, creates dead zone
- *
- * Layer stack:
- *  1. Sharp image inside mask-image wrapper   → fades bottom via alpha mask
- *  2. Left vignette (separate, not masked)    → title/text readability only
- *  3. Top vignette  (separate, not masked)    → navbar area blend
- *
- * Nothing here fades to black. The aurora (AmbientBackground) provides the
- * colour wash wherever the mask makes the hero image transparent.
+ * Implements a persistent two-layer stack where the previous image stays at 100% opacity
+ * underneath while the new image smoothly fades in on top, guaranteeing ZERO brightness dip,
+ * blackout or flicker during slide transitions.
  */
 export default function PageBackground({ movie }: PageBackgroundProps) {
-  const [readyId, setReadyId] = useState<string | null>(null);
-  const imgCache = useRef<Record<string, boolean>>({});
+  const [layers, setLayers] = useState<{ id: string; src: string; key: number }[]>([]);
+  const layerKey = useRef(0);
 
   useEffect(() => {
     if (!movie) return;
-    if (imgCache.current[movie.id]) { setReadyId(movie.id); return; }
     const src = movie.backdrop || movie.poster;
     if (!src) return;
-    const img = new Image();
-    img.src = src;
-    const done = () => { imgCache.current[movie.id] = true; setReadyId(movie.id); };
-    img.onload = done;
-    img.onerror = done;
-  }, [movie]);
 
-  const readyMovie = movie && movie.id === readyId ? movie : null;
+    setLayers((prev) => {
+      if (prev.length > 0 && prev[prev.length - 1].id === movie.id) return prev;
+      layerKey.current += 1;
+      const newLayer = { id: movie.id, src, key: layerKey.current };
+      // Keep only previous layer underneath and new layer on top
+      return [...prev.slice(-1), newLayer];
+    });
+  }, [movie?.id, movie?.backdrop, movie?.poster]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-      <AnimatePresence mode="sync">
-        {readyMovie && (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      {layers.map((layer, index) => {
+        const isTop = index === layers.length - 1;
+        const shouldFadeIn = isTop && layers.length > 1;
+
+        return (
           <motion.div
-            key={readyMovie.id}
-            initial={{ opacity: 0 }}
+            key={layer.key}
+            initial={shouldFadeIn ? { opacity: 0 } : { opacity: 1 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.0, ease: 'easeInOut' }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            onAnimationComplete={() => {
+              if (isTop && layers.length > 1) {
+                setLayers([layer]);
+              }
+            }}
             className="absolute inset-0"
+            style={{ zIndex: index }}
           >
-            {/* ── Sharp hero image — bottom fade via CSS mask ───────────────────
-                mask-image: the image stays fully opaque (black mask = visible)
-                from 0%→42%, then alpha-fades to fully transparent at 96%.
-                "Transparent" in the mask = the image pixel is invisible →
-                the aurora layer beneath shows through with full colour.
-                NO dark overlay is placed here for the bottom fade. */}
+            {/* ── Sharp hero image — bottom fade via CSS mask ─────────────────── */}
             <div
               className="absolute inset-0"
               style={{
@@ -69,12 +63,13 @@ export default function PageBackground({ movie }: PageBackgroundProps) {
               }}
             >
               <img
-                src={readyMovie.backdrop || readyMovie.poster}
+                src={layer.src}
                 alt=""
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover object-top"
                 style={{ filter: 'brightness(0.84) contrast(1.08) saturate(1.06)' }}
               />
-              {/* Left subtle vignette for text readability without creating a heavy black bar/patch */}
+              {/* Left subtle vignette for text readability */}
               <div
                 className="absolute inset-0"
                 style={{
@@ -84,8 +79,8 @@ export default function PageBackground({ movie }: PageBackgroundProps) {
               />
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        );
+      })}
     </div>
   );
 }

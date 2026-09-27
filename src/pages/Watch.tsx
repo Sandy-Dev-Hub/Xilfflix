@@ -194,17 +194,36 @@ export default function Watch({ type }: { type: 'movie' | 'tv' }) {
               </button>
             </div>
           ) : (
-            <iframe
-              key={iframeKey}
-              src={activeServer?.sourceUrl}
-              title={`${movie.title} — ${activeServer?.name}`}
-              className="w-full h-full aspect-video border-0"
-              allowFullScreen
-              referrerPolicy="no-referrer-when-downgrade"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; web-share"
-              sandbox={activeServer?.sourceUrl?.includes('vidlink.pro') ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation"}
-              onError={() => setIframeError(true)}
-            />
+            <div className="relative w-full aspect-video">
+              <iframe
+                key={iframeKey}
+                src={activeServer?.sourceUrl}
+                title={`${movie.title} — ${activeServer?.name}`}
+                className="w-full h-full aspect-video border-0"
+                allowFullScreen
+                referrerPolicy="no-referrer-when-downgrade"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; web-share"
+                sandbox={activeServer?.sourceUrl?.includes('vidlink.pro') ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation"}
+                onError={() => setIframeError(true)}
+              />
+              {/* Shields over watermark links to block hover link URL status bar & tooltips */}
+              <div
+                className="absolute top-0 left-0 w-36 h-16 z-20 cursor-default bg-transparent"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+              />
+              {activeServer?.sourceUrl?.includes('fmov.my') && (
+                <div
+                  className="absolute bottom-1.5 sm:bottom-2 right-[225px] sm:right-[230px] w-20 sm:w-24 h-8 sm:h-9 z-20 cursor-default bg-transparent"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                />
+              )}
+            </div>
           )}
         </div>
 

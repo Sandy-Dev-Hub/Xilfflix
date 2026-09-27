@@ -324,6 +324,25 @@ export default function WatchParty() {
                   />
                 )}
 
+                {/* Shield over top-left watermark corner to block hover link URL status bar & tooltips */}
+                <div
+                  className="absolute top-0 left-0 w-36 h-16 z-20 cursor-default bg-transparent"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                />
+
+                {activeServer?.sourceUrl?.includes('fmov.my') && (
+                  <div
+                    className="absolute bottom-1.5 sm:bottom-2 right-[225px] sm:right-[230px] w-20 sm:w-24 h-8 sm:h-9 z-20 cursor-default bg-transparent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                    }}
+                  />
+                )}
+
                 {/* Sync status pill */}
                 <div className="absolute top-3 left-3 z-10 pointer-events-none">
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-black/80 backdrop-blur-md border border-white/15 rounded-full shadow-lg">

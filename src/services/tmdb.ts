@@ -370,24 +370,36 @@ export async function getTVSeason(tvId: string, seasonNumber: number): Promise<a
   }
 }
 
+const logoCache = new Map<string, Promise<string | null>>();
+
 export async function getMovieLogo(id: string, type: 'movie' | 'tv'): Promise<string | null> {
-  try {
-    // Fetch all images without language restriction to ensure we don't miss foreign logos
-    const data = await fetchTMDB(`/${type}/${id}/images`);
-    const logos = data.logos || [];
-    if (logos.length > 0) {
-      // Prioritize English, then language-agnostic (null), then fallback to whatever is available
-      const logo = logos.find((l: any) => l.iso_639_1 === 'en') || 
-                   logos.find((l: any) => l.iso_639_1 === null) || 
-                   logos[0];
-      if (logo?.file_path) {
-        return `https://image.tmdb.org/t/p/w500${logo.file_path}`;
-      }
-    }
-  } catch (e) {
-    console.error('Failed to fetch movie logo:', e);
+  const cacheKey = `${type}-${id}`;
+  if (logoCache.has(cacheKey)) {
+    return logoCache.get(cacheKey)!;
   }
-  return null;
+
+  const fetchPromise = (async () => {
+    try {
+      // Fetch all images without language restriction to ensure we don't miss foreign logos
+      const data = await fetchTMDB(`/${type}/${id}/images`);
+      const logos = data.logos || [];
+      if (logos.length > 0) {
+        // Prioritize English, then language-agnostic (null), then fallback to whatever is available
+        const logo = logos.find((l: any) => l.iso_639_1 === 'en') || 
+                     logos.find((l: any) => l.iso_639_1 === null) || 
+                     logos[0];
+        if (logo?.file_path) {
+          return `https://image.tmdb.org/t/p/w500${logo.file_path}`;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch movie logo:', e);
+    }
+    return null;
+  })();
+
+  logoCache.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 // ─── Trailer video cache & fetcher ───────────────────────────────────────────

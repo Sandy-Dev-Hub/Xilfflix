@@ -30,8 +30,8 @@ export default function Hero({ movies, onActiveMovieChange, activeMovie: activeM
   const logosFetched = useRef(false);
 
   const movie = movies[current];
-  // Use the externally tracked active movie if provided, else fall back to current slide
-  const bgMovie = activeMovieProp !== undefined ? activeMovieProp : movie;
+  // Direct sync with current slide to prevent 1-frame lag/flicker
+  const bgMovie = movie;
   const inList = movie ? isInList(movie.id) : false;
 
   // Notify parent of active movie
@@ -71,32 +71,41 @@ export default function Hero({ movies, onActiveMovieChange, activeMovie: activeM
   useEffect(() => {
     if (movies.length > 0 && !logosFetched.current) {
       logosFetched.current = true;
-      // Fetch logos for all hero movies up-front so they are ready for the mobile swipe slider
-      movies.forEach(m => {
-        getMovieLogo(m.id, m.type).then((url) => {
-          if (url) {
-            setLogos((prev) => ({ ...prev, [m.id]: url }));
+      // Pre-fetch all logos and preload image assets up-front in a single batch
+      Promise.all(
+        movies.map(async (m) => {
+          if (m.backdrop || m.poster) {
+            const img = new Image();
+            img.src = (m.backdrop || m.poster)!;
           }
+          const url = await getMovieLogo(m.id, m.type);
+          if (url) {
+            const logoImg = new Image();
+            logoImg.src = url;
+          }
+          return { id: m.id, url };
+        })
+      ).then((results) => {
+        const logoMap: Record<string, string> = {};
+        results.forEach(({ id, url }) => {
+          if (url) logoMap[id] = url;
         });
+        setLogos(logoMap);
       });
     }
   }, [movies]);
 
-  const goTo = useCallback(
-    (idx: number) => {
-      setDirection(idx > current ? 1 : -1);
-      setCurrent(idx);
-    },
-    [current]
-  );
+  const goTo = useCallback((idx: number) => {
+    setCurrent(idx);
+  }, []);
 
-  const next = useCallback(() => goTo((current + 1) % movies.length), [current, goTo, movies.length]);
-  const prev = useCallback(() => goTo((current - 1 + movies.length) % movies.length), [current, goTo, movies.length]);
+  const next = useCallback(() => setCurrent((prev) => (prev + 1) % movies.length), [movies.length]);
+  const prev = useCallback(() => setCurrent((prev) => (prev - 1 + movies.length) % movies.length), [movies.length]);
 
-  // Desktop Auto-cycle every 4 seconds
+  // Desktop Auto-cycle every 5 seconds
   useEffect(() => {
     if (movies.length === 0) return;
-    const id = setInterval(next, 4000);
+    const id = setInterval(next, 5000);
     return () => clearInterval(id);
   }, [next, movies.length]);
 
