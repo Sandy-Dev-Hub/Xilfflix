@@ -4,6 +4,7 @@ export interface Server {
   name: string;
   status: 'online' | 'offline';
   sourceUrl: string;
+  sandbox?: string;
 }
 
 export interface SeasonInfo {
