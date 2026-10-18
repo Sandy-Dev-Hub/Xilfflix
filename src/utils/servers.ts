@@ -6,7 +6,7 @@ import type { Server } from '@/types/movie';
  * Server 2: AutoEmbed (HD)
  * Server 3: VidLink (Fast HD)
  * Server 4: Nxsha (Multi-Audio)
- * Server 5: VidSrc
+ * Server 5: VidLove
  */
 export function makeServers(
   tmdbId?: string,
@@ -30,16 +30,9 @@ export function makeServers(
     let server2Url = `https://autoembed.sbs/embed/movie/${tmdbId}/`;
     let server3Url = `https://vidlink.pro/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
     let server4Url = `https://nxsha.space/embed/movie/${tmdbId}`;
-    let server5Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
+    let server5Url = `https://player.vidlove.cc/embed/movie/${tmdbId}`;
     let server1Status: 'online' | 'offline' = 'online';
     let server4Status: 'online' | 'offline' = 'online';
-    
-    // Custom overrides for specific movies if needed
-    if (tmdbId === '37941') {
-      server5Url = `https://vidsrc.wiki/embed/movie/37941`;
-    } else if (tmdbId === '329135') {
-      server5Url = `https://vidsrc.wiki/embed/movie/329135`;
-    }
 
     return [
       {
@@ -63,7 +56,7 @@ export function makeServers(
         sourceUrl: server4Url,
       },
       {
-        name: 'Server 5',
+        name: 'Server 5 (VidLove)',
         status: 'online',
         sourceUrl: server5Url,
       },
@@ -93,9 +86,9 @@ export function makeServers(
       sourceUrl: `https://nxsha.space/embed/tv/${tmdbId}/${season}/${episode}`,
     },
     {
-      name: 'Server 5',
+      name: 'Server 5 (VidLove)',
       status: 'online',
-      sourceUrl: `https://vidsrc.wiki/embed/tv/${tmdbId}/${season}/${episode}/`,
+      sourceUrl: `https://player.vidlove.cc/embed/tv/${tmdbId}/${season}/${episode}`,
     },
   ];
 }

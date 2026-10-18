@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -50,6 +50,14 @@ export default function WatchParty() {
   const [serverIdx, setServerIdx] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
   const [iframeError, setIframeError] = useState(false);
+  const [autoSwitch, setAutoSwitch] = useState(true);
+  const [autoSwitchNotice, setAutoSwitchNotice] = useState<string | null>(null);
+  const triedServersRef = useRef<Set<number>>(new Set([0]));
+
+  const servers = room?.movieId
+    ? makeServers(room.movieId, room.movieType, season, episode)
+    : [];
+  const activeServer = servers[serverIdx];
 
   // Fetch TV Show details for accurate seasons & episodes in WatchParty
   const { data: tvDetails } = useTMDB(() => {
@@ -128,18 +136,90 @@ export default function WatchParty() {
     await updateRoomStatus('watching');
   };
 
+  const triggerAutoSwitch = useCallback((reason?: string) => {
+    if (!servers.length) return;
+
+    if (!autoSwitch) {
+      setIframeError(true);
+      return;
+    }
+
+    const nextIdx = (serverIdx + 1) % servers.length;
+
+    if (triedServersRef.current.size >= servers.length) {
+      setAutoSwitchNotice(null);
+      setIframeError(true);
+      return;
+    }
+
+    triedServersRef.current.add(nextIdx);
+    const currentName = servers[serverIdx]?.name || `Server ${serverIdx + 1}`;
+    const nextName = servers[nextIdx]?.name || `Server ${nextIdx + 1}`;
+
+    setAutoSwitchNotice(`${currentName} unavailable. Auto-switching to ${nextName}...`);
+    setServerIdx(nextIdx);
+    setIframeError(false);
+    setIframeKey((k) => k + 1);
+  }, [autoSwitch, serverIdx, servers]);
+
   const handleServerSwitch = useCallback((idx: number) => {
     setServerIdx(idx);
+    triedServersRef.current = new Set([idx]);
+    setAutoSwitchNotice(null);
     setIframeError(false);
     setIframeKey((k) => k + 1);
   }, []);
 
+  const handleNextServer = useCallback(() => {
+    if (triedServersRef.current.size >= servers.length) {
+      triedServersRef.current = new Set([0]);
+    }
+    triggerAutoSwitch('Manual next server');
+  }, [servers.length, triggerAutoSwitch]);
+
   const handleEpisodeChange = useCallback((s: number, e: number) => {
     setSeason(s);
     setEpisode(e);
+    setServerIdx(0);
+    triedServersRef.current = new Set([0]);
+    setAutoSwitchNotice(null);
     setIframeError(false);
     setIframeKey((k) => k + 1);
   }, []);
+
+  // Dismiss auto switch notice after 4.5 seconds
+  useEffect(() => {
+    if (!autoSwitchNotice) return;
+    const timer = setTimeout(() => {
+      setAutoSwitchNotice(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [autoSwitchNotice]);
+
+  // Listen for iframe postMessage error events
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (
+          data?.event === 'error' ||
+          data?.type === 'error' ||
+          data?.status === 'error' ||
+          data?.event === 'not_found' ||
+          data?.event === 'media_error' ||
+          data?.error === true ||
+          (typeof data === 'string' && (data.toLowerCase().includes('not found') || data.toLowerCase().includes('media error')))
+        ) {
+          triggerAutoSwitch('Player error reported');
+        }
+      } catch {
+        // Ignore unparseable messages
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [triggerAutoSwitch]);
 
   // ─── Render States ───────────────────────────────────────────────────────────
 
@@ -197,8 +277,6 @@ export default function WatchParty() {
   }
 
   // 7. Watching (Main interface)
-  const servers = makeServers(room.movieId, room.movieType, season, episode);
-  const activeServer = servers[serverIdx];
   const tvSeasons: SeasonInfo[] = tvDetails?.seasons || [];
   const totalSeasons = tvSeasons.length > 0 ? tvSeasons.length : (tvDetails?.numberOfSeasons ?? 1);
   const currentSeasonObj = tvSeasons.find((s: SeasonInfo) => s.seasonNumber === season);
@@ -282,6 +360,26 @@ export default function WatchParty() {
         <div className="flex-1 flex flex-col min-w-0 bg-black overflow-hidden relative">
           <SyncToastNotification toast={syncToast} />
           
+          {autoSwitchNotice && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="mx-4 mt-2 mb-0 flex items-center justify-between gap-3 px-4 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-medium shadow-lg z-30"
+            >
+              <div className="flex items-center gap-2">
+                <RefreshCw size={13} className="animate-spin text-amber-400 flex-shrink-0" />
+                <span>{autoSwitchNotice}</span>
+              </div>
+              <button
+                onClick={() => setAutoSwitchNotice(null)}
+                className="text-amber-400/80 hover:text-white text-xs px-2 py-0.5 rounded bg-black/40 transition-colors"
+              >
+                Dismiss
+              </button>
+            </motion.div>
+          )}
+
           {/* Iframe Container with perfect 16:9 bounds fitting */}
           <div className="flex-1 min-h-0 relative bg-black flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
             <div
@@ -299,15 +397,17 @@ export default function WatchParty() {
                 {iframeError ? (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-xf-card p-6">
                     <AlertCircle size={36} className="text-xf-red" />
-                    <p className="text-white font-medium text-center px-4">
-                      This server couldn't load. Try switching servers below.
+                    <p className="text-white font-medium text-center px-4 max-w-md">
+                      {triedServersRef.current.size >= servers.length
+                        ? 'All servers were checked and could not load this video. Try again later or pick a server below.'
+                        : `${activeServer?.name || 'This server'} couldn't load. Auto-switching to next server or choose below.`}
                     </p>
                     <button
-                      onClick={() => handleServerSwitch((serverIdx + 1) % servers.length)}
+                      onClick={handleNextServer}
                       className="flex items-center gap-2 px-5 py-2.5 bg-xf-red hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors"
                     >
                       <RefreshCw size={15} />
-                      Try Next Server
+                      {triedServersRef.current.size >= servers.length ? 'Retry From Server 1' : 'Try Next Server'}
                     </button>
                   </div>
                 ) : (
@@ -319,8 +419,8 @@ export default function WatchParty() {
                     allowFullScreen
                     referrerPolicy="no-referrer-when-downgrade"
                     allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; web-share"
-                    sandbox={activeServer?.sandbox ?? ((activeServer?.sourceUrl?.includes('vidlink.pro') || activeServer?.sourceUrl?.includes('autoembed.sbs')) ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation")}
-                    onError={() => setIframeError(true)}
+                    sandbox={activeServer?.sandbox ?? ((activeServer?.sourceUrl?.includes('vidlink.pro') || activeServer?.sourceUrl?.includes('autoembed.sbs') || activeServer?.sourceUrl?.includes('vidlove.cc')) ? undefined : "allow-scripts allow-same-origin allow-forms allow-presentation")}
+                    onError={() => triggerAutoSwitch('Iframe failed to load')}
                   />
                 )}
 
@@ -378,6 +478,23 @@ export default function WatchParty() {
                     {s.name}
                   </button>
                 ))}
+                <button
+                  onClick={() => setAutoSwitch((prev) => !prev)}
+                  className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border transition-all ${
+                    autoSwitch
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      : 'bg-white/5 border-white/10 text-xf-subtle'
+                  }`}
+                  title="Toggle automatic switching when a server doesn't respond"
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      autoSwitch ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'bg-gray-500'
+                    }`}
+                  />
+                  <span>Auto-Switch: {autoSwitch ? 'ON' : 'OFF'}</span>
+                </button>
+
                 <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 ml-1">
                   <ShieldCheck size={12} />
                   Ad Blocker Active
