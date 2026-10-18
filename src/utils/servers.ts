@@ -3,7 +3,7 @@ import type { Server } from '@/types/movie';
 /**
  * Builds the embed servers for a given TMDB ID.
  * Server 1: Fmov (Download option)
- * Server 2: VidSrc.sbs (HD)
+ * Server 2: AutoEmbed (HD)
  * Server 3: VidLink (Fast HD)
  * Server 4: Nxsha (Multi-Audio)
  * Server 5: VidSrc
@@ -27,7 +27,7 @@ export function makeServers(
 
   if (mediaType === 'movie') {
     let server1Url = `https://fmov.my/embed/movie/${tmdbId}?color=E50914`;
-    let server2Url = `https://vidsrc.sbs/embed/movie/${tmdbId}`;
+    let server2Url = `https://autoembed.sbs/embed/movie/${tmdbId}/`;
     let server3Url = `https://vidlink.pro/movie/${tmdbId}?primaryColor=E50914&autoplay=true`;
     let server4Url = `https://nxsha.space/embed/movie/${tmdbId}`;
     let server5Url = `https://vidsrc.wiki/embed/movie/${tmdbId}/`;
@@ -81,7 +81,7 @@ export function makeServers(
     {
       name: 'Server 2 (HD)',
       status: 'online',
-      sourceUrl: `https://vidsrc.sbs/embed/tv/${tmdbId}/${season}/${episode}`,
+      sourceUrl: `https://autoembed.sbs/embed/tv/${tmdbId}/${season}/${episode}/`,
       sandbox: 'allow-scripts allow-same-origin allow-forms allow-presentation',
     },
     {
