@@ -18,7 +18,7 @@ export function makeServers(
     // Fallback while ID is not yet known (e.g. before TMDB fetch completes)
     return [
       { name: 'Server 1 (Download option)', status: 'online', sourceUrl: '' },
-      { name: 'Server 2 (HD)', status: 'online', sourceUrl: '', sandbox: 'allow-scripts allow-same-origin allow-forms allow-presentation' },
+      { name: 'Server 2 (HD)', status: 'online', sourceUrl: '' },
       { name: 'Server 3 (Fast HD)', status: 'online', sourceUrl: '' },
       { name: 'Server 4 (Multi-Audio)', status: 'online', sourceUrl: '' },
       { name: 'Server 5', status: 'online', sourceUrl: '' },
@@ -51,7 +51,6 @@ export function makeServers(
         name: 'Server 2 (HD)',
         status: 'online',
         sourceUrl: server2Url,
-        sandbox: 'allow-scripts allow-same-origin allow-forms allow-presentation',
       },
       {
         name: 'Server 3 (Fast HD)',
@@ -82,7 +81,6 @@ export function makeServers(
       name: 'Server 2 (HD)',
       status: 'online',
       sourceUrl: `https://autoembed.sbs/embed/tv/${tmdbId}/${season}/${episode}/`,
-      sandbox: 'allow-scripts allow-same-origin allow-forms allow-presentation',
     },
     {
       name: 'Server 3 (Fast HD)',
