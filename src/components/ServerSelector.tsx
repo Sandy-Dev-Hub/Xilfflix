@@ -18,7 +18,7 @@ export default function ServerSelector({
       <h3 className="text-xf-muted text-sm font-semibold uppercase tracking-wider mb-3">
         Select Server
       </h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
         {servers.map((server, i) => {
           const online = server.status === 'online';
           const selected = i === selectedIndex;
